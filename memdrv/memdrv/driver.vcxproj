@@ -13,7 +13,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{531182B7-E5A1-4A6E-809A-6DA89145A399}</ProjectGuid>
     <RootNamespace>driver</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.28000.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
     <ProjectName>memdrv</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -21,14 +21,12 @@
     <ConfigurationType>Driver</ConfigurationType>
     <DriverType>KMDF</DriverType>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-    <VCToolsVersion>14.44.35207</VCToolsVersion>
     <UseDebugLibraries>true</UseDebugLibraries>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Driver</ConfigurationType>
     <DriverType>KMDF</DriverType>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-    <VCToolsVersion>14.44.35207</VCToolsVersion>
     <UseDebugLibraries>false</UseDebugLibraries>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -37,19 +35,11 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <SpectreMitigation>true</SpectreMitigation>
       <PreprocessorDefinitions>_AMD64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>
-        C:\Program Files (x86)\Windows Kits\10\Include\10.0.28000.0\km;
-        C:\Program Files (x86)\Windows Kits\10\Include\10.0.28000.0\shared;
-        C:\Program Files (x86)\Windows Kits\10\Include\10.0.28000.0\um;
-        %(AdditionalIncludeDirectories)
-      </AdditionalIncludeDirectories>
-      <AdditionalLibraryDirectories>
-        C:\Program Files (x86)\Windows Kits\10\Lib\10.0.28000.0\km\x64;
-        %(AdditionalLibraryDirectories)
-      </AdditionalLibraryDirectories>
+      <AdditionalIncludeDirectories>$(WindowsSdkDir)Include\$(TargetPlatformVersion)\km;$(WindowsSdkDir)Include\$(TargetPlatformVersion)\shared;$(WindowsSdkDir)Include\$(TargetPlatformVersion)\um;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EntryPointSymbol>DriverEntry</EntryPointSymbol>
+      <AdditionalLibraryDirectories>$(WindowsSdkDir)Lib\$(TargetPlatformVersion)\km\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -57,19 +47,11 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <SpectreMitigation>true</SpectreMitigation>
       <PreprocessorDefinitions>_AMD64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>
-        C:\Program Files (x86)\Windows Kits\10\Include\10.0.28000.0\km;
-        C:\Program Files (x86)\Windows Kits\10\Include\10.0.28000.0\shared;
-        C:\Program Files (x86)\Windows Kits\10\Include\10.0.28000.0\um;
-        %(AdditionalIncludeDirectories)
-      </AdditionalIncludeDirectories>
-      <AdditionalLibraryDirectories>
-        C:\Program Files (x86)\Windows Kits\10\Lib\10.0.28000.0\km\x64;
-        %(AdditionalLibraryDirectories)
-      </AdditionalLibraryDirectories>
+      <AdditionalIncludeDirectories>$(WindowsSdkDir)Include\$(TargetPlatformVersion)\km;$(WindowsSdkDir)Include\$(TargetPlatformVersion)\shared;$(WindowsSdkDir)Include\$(TargetPlatformVersion)\um;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EntryPointSymbol>DriverEntry</EntryPointSymbol>
+      <AdditionalLibraryDirectories>$(WindowsSdkDir)Lib\$(TargetPlatformVersion)\km\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

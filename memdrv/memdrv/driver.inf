@@ -1,25 +1,46 @@
 [Version]
-Signature="$WINDOWS NT$"
-Class=System
-ClassGuid={4d36e97d-e325-11ce-bfc1-08002be10318}
-Provider=%ManufacturerName%
-DriverVer=06/02/2026,1.0.0.0
+Signature   = "$WINDOWS NT$"
+Class       = System
+ClassGuid   = {4d36e97d-e325-11ce-bfc1-08002be10318}
+Provider    = %ManufacturerName%
+CatalogFile = memdrv.cat
+DriverVer   = 06/02/2026,1.0.0.0
+PnpLockdown = 1
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+memdrv.sys  = 1,,
 
 [Manufacturer]
 %ManufacturerName%=Standard,NT$ARCH$
 
 [Standard.NT$ARCH$]
-%DeviceDesc%=Driver, root\MemDrv
+%DeviceDesc%=memdrv_Device, root\MemDrv
 
-[Driver.Services]
-AddService=MemDrv,2,DriverService
+[memdrv_Device.NT]
+CopyFiles=Drivers_Dir
 
-[DriverService]
-ServiceType=1
-StartType=3
-ErrorControl=1
-ServiceBinary=%12%\memdrv.sys
+[Drivers_Dir]
+memdrv.sys
+
+[memdrv_Device.NT.Services]
+AddService = memdrv,%SPSVCINST_ASSOCSERVICE%, memdrv_Service_Inst
+
+[memdrv_Service_Inst]
+DisplayName    = %SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\memdrv.sys
 
 [Strings]
-ManufacturerName="Your Organization"
-DeviceDesc="Memory Access Driver"
+SPSVCINST_ASSOCSERVICE = 0x00000002
+ManufacturerName       = "Your Organization"
+DiskName               = "memdrv Installation Disk"
+DeviceDesc             = "Memory Access Driver"
+SVCDESC                = "Memory Access Driver Service"

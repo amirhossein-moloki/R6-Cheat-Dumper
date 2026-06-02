@@ -15,10 +15,10 @@ This document provides technical instructions for building and running the Rainb
 ## Building
 
 ### Kernel Driver (memdrv)
-- Open `memdrv/memdrv/memdrv.sln`.
+- Open `memdrv/memdrv.sln`.
 - Set configuration to **Release | x64**.
 - Build the project.
-- *Note*: Requires WDK. Must be loaded using a driver mapper or by enabling Test Mode.
+- *Note*: Requires WDK. The project is now configured to use the latest installed Windows SDK and toolset for better portability.
 
 ### Offset Dumper (r6dumper)
 - Open `r6dumper/r6od.sln`.
@@ -28,6 +28,7 @@ This document provides technical instructions for building and running the Rainb
 
 ### External Cheat (r6external)
 - Open `r6external/rainbowsix-external.sln`.
+- Visual Studio will automatically restore the **MinHook** NuGet package.
 - Set configuration to **Release | x64**.
 - This project builds as a **DLL**. Use a DLL injector or change project settings to **Application (.exe)** if preferred.
 - Build the project.

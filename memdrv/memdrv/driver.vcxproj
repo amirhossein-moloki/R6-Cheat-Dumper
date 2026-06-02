@@ -170,6 +170,7 @@
     <ClCompile Include="util\process.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="defs.hpp" />
     <ClInclude Include="hooks\hooks.hpp" />
     <ClInclude Include="routines\routines.hpp" />
     <ClInclude Include="util\clean.hpp" />

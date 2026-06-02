@@ -1,20 +1,124 @@
 #include "defs.hpp"
-
-#include "hooks/hooks.hpp"
+#include "routines/routines.hpp"
 #include "util/clean.hpp"
 
-NTSTATUS DriverEntry(PDRIVER_OBJECT driverObject, PUNICODE_STRING registryPath) {
-	UNREFERENCED_PARAMETER(driverObject);
-	UNREFERENCED_PARAMETER(registryPath);
+UNICODE_STRING DeviceName = RTL_CONSTANT_STRING(L"\\Device\\MemDrv");
+UNICODE_STRING SymbolicLink = RTL_CONSTANT_STRING(L"\\DosDevices\\Global\\MemDrv");
 
-	DbgPrint("[+] hooking!");
+void DriverUnload(PDRIVER_OBJECT driverObject) {
+    IoDeleteSymbolicLink(&SymbolicLink);
+    IoDeleteDevice(driverObject->DeviceObject);
+    DbgPrint("[+] Driver Unloaded\n");
+}
 
-	if (!hooks::init())
-		return STATUS_FAILED_DRIVER_ENTRY;
+NTSTATUS IoControl(PDEVICE_OBJECT deviceObject, PIRP irp) {
+    UNREFERENCED_PARAMETER(deviceObject);
 
-	util::clean_cache();
+    NTSTATUS status = STATUS_SUCCESS;
+    PIO_STACK_LOCATION stack = IoGetCurrentIrpStackLocation(irp);
+    ULONG controlCode = stack->Parameters.DeviceIoControl.IoControlCode;
+    ULONG inputLength = stack->Parameters.DeviceIoControl.InputBufferLength;
+    ULONG outputLength = stack->Parameters.DeviceIoControl.OutputBufferLength;
 
-	DbgPrint("[+] hooked!");
+    PVOID buffer = stack->Parameters.DeviceIoControl.Type3InputBuffer;
 
-	return STATUS_SUCCESS;
+    if (!buffer) {
+        status = STATUS_INVALID_PARAMETER;
+    } else {
+        __try {
+            switch (controlCode) {
+            case IOCTL_MEMORY_READ: {
+                if (inputLength < sizeof(MEMORY_REQUEST)) {
+                    status = STATUS_BUFFER_TOO_SMALL;
+                    break;
+                }
+                ProbeForWrite(buffer, sizeof(MEMORY_REQUEST), 1);
+                PMEMORY_REQUEST request = (PMEMORY_REQUEST)buffer;
+                request->Status = routines::ReadProcessMemoryKernel(request->ProcessId, request->Address, request->Buffer, request->Size);
+                status = request->Status;
+                break;
+            }
+            case IOCTL_MEMORY_WRITE: {
+                if (inputLength < sizeof(MEMORY_REQUEST)) {
+                    status = STATUS_BUFFER_TOO_SMALL;
+                    break;
+                }
+                ProbeForWrite(buffer, sizeof(MEMORY_REQUEST), 1);
+                PMEMORY_REQUEST request = (PMEMORY_REQUEST)buffer;
+                request->Status = routines::WriteProcessMemoryKernel(request->ProcessId, request->Address, request->Buffer, request->Size);
+                status = request->Status;
+                break;
+            }
+            case IOCTL_MODULE_BASE: {
+                if (inputLength < sizeof(MODULE_REQUEST)) {
+                    status = STATUS_BUFFER_TOO_SMALL;
+                    break;
+                }
+                ProbeForWrite(buffer, sizeof(MODULE_REQUEST), 1);
+                PMODULE_REQUEST request = (PMODULE_REQUEST)buffer;
+                request->Status = routines::GetModuleBaseAddress(request->ProcessId, request->ModuleName, &request->BaseAddress);
+                status = request->Status;
+                break;
+            }
+            case IOCTL_PROCESS_ID: {
+                if (inputLength < sizeof(PID_REQUEST)) {
+                    status = STATUS_BUFFER_TOO_SMALL;
+                    break;
+                }
+                ProbeForWrite(buffer, sizeof(PID_REQUEST), 1);
+                PPID_REQUEST request = (PPID_REQUEST)buffer;
+                request->Status = routines::GetProcessIdByName(request->ProcessName, &request->ProcessId);
+                status = request->Status;
+                break;
+            }
+            default:
+                status = STATUS_INVALID_DEVICE_REQUEST;
+                break;
+            }
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER) {
+            status = GetExceptionCode();
+            DbgPrint("[-] Exception in IoControl: 0x%X\n", status);
+        }
+    }
+
+    irp->IoStatus.Status = status;
+    irp->IoStatus.Information = 0;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    return status;
+}
+
+NTSTATUS CreateClose(PDEVICE_OBJECT deviceObject, PIRP irp) {
+    UNREFERENCED_PARAMETER(deviceObject);
+    irp->IoStatus.Status = STATUS_SUCCESS;
+    irp->IoStatus.Information = 0;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    return STATUS_SUCCESS;
+}
+
+extern "C" NTSTATUS DriverEntry(PDRIVER_OBJECT driverObject, PUNICODE_STRING registryPath) {
+    UNREFERENCED_PARAMETER(registryPath);
+
+    NTSTATUS status;
+    PDEVICE_OBJECT deviceObject = nullptr;
+
+    status = IoCreateDevice(driverObject, 0, &DeviceName, FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN, FALSE, &deviceObject);
+    if (!NT_SUCCESS(status)) {
+        return status;
+    }
+
+    status = IoCreateSymbolicLink(&SymbolicLink, &DeviceName);
+    if (!NT_SUCCESS(status)) {
+        IoDeleteDevice(deviceObject);
+        return status;
+    }
+
+    driverObject->MajorFunction[IRP_MJ_CREATE] = CreateClose;
+    driverObject->MajorFunction[IRP_MJ_CLOSE] = CreateClose;
+    driverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = IoControl;
+    driverObject->DriverUnload = DriverUnload;
+
+    DbgPrint("[+] Driver Loaded\n");
+
+    return STATUS_SUCCESS;
 }

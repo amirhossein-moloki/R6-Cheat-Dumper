@@ -36,6 +36,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="defs.hpp" />
     <ClInclude Include="routines\routines.hpp">
       <Filter>routines</Filter>
     </ClInclude>

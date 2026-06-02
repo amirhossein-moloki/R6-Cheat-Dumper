@@ -1,164 +1,84 @@
 #include "driver.hpp"
 
-#include <Windows.h>
-#include <winioctl.h>
-#include <winternl.h>
+bool KernelInterface::Initialize() {
+    m_hDevice = CreateFileW(L"\\\\.\\Global\\MemDrv", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+    return m_hDevice != INVALID_HANDLE_VALUE;
+}
 
-#pragma comment(lib, "ntdll.lib")
+void KernelInterface::Shutdown() {
+    if (m_hDevice != INVALID_HANDLE_VALUE) {
+        CloseHandle(m_hDevice);
+        m_hDevice = INVALID_HANDLE_VALUE;
+    }
+}
 
+bool KernelInterface::ReadMemory(HANDLE pid, UINT64 address, void* buffer, UINT64 size) {
+    MEMORY_REQUEST request;
+    request.ProcessId = pid;
+    request.Address = address;
+    request.Buffer = buffer;
+    request.Size = size;
+
+    return DeviceIoControl(m_hDevice, IOCTL_MEMORY_READ, &request, sizeof(request), &request, sizeof(request), NULL, NULL);
+}
+
+bool KernelInterface::WriteMemory(HANDLE pid, UINT64 address, void* buffer, UINT64 size) {
+    MEMORY_REQUEST request;
+    request.ProcessId = pid;
+    request.Address = address;
+    request.Buffer = buffer;
+    request.Size = size;
+
+    return DeviceIoControl(m_hDevice, IOCTL_MEMORY_WRITE, &request, sizeof(request), &request, sizeof(request), NULL, NULL);
+}
+
+UINT64 KernelInterface::GetModuleBase(HANDLE pid, const wchar_t* moduleName) {
+    MODULE_REQUEST request;
+    request.ProcessId = pid;
+    if (moduleName) {
+        wcscpy_s(request.ModuleName, moduleName);
+    } else {
+        request.ModuleName[0] = L'\0';
+    }
+
+    if (DeviceIoControl(m_hDevice, IOCTL_MODULE_BASE, &request, sizeof(request), &request, sizeof(request), NULL, NULL)) {
+        return request.BaseAddress;
+    }
+    return 0;
+}
+
+HANDLE KernelInterface::GetProcessId(const wchar_t* processName) {
+    PID_REQUEST request;
+    wcscpy_s(request.ProcessName, processName);
+
+    if (DeviceIoControl(m_hDevice, IOCTL_PROCESS_ID, &request, sizeof(request), &request, sizeof(request), NULL, NULL)) {
+        return request.ProcessId;
+    }
+    return NULL;
+}
+
+// Legacy wrappers
 namespace driver {
-	void* _handle = nullptr;
+    KernelInterface* interface = new KernelInterface();
 
-	constexpr auto SYSCALL_UNIQUE = 0x133;
+    bool initialize() {
+        return interface->Initialize();
+    }
 
-	struct open_handle_data {
-		uint32_t pid;
-		uint64_t handle;
-	};
+    uint64_t open_process(uint32_t pid) {
+        // In the new system, handle is just PID
+        return (uint64_t)pid;
+    }
 
-	struct read_write_data {
-		uint64_t handle;
-		uint64_t address;
-		uint64_t buffer;
+    bool read_memory(uint64_t handle, uint64_t address, void* buffer, uint32_t size) {
+        return interface->ReadMemory((HANDLE)handle, address, buffer, (UINT64)size);
+    }
 
-		uint32_t size;
-	};
+    bool write_memory(uint64_t handle, uint64_t address, const void* buffer, uint32_t size) {
+        return interface->WriteMemory((HANDLE)handle, address, (void*)buffer, (UINT64)size);
+    }
 
-	struct virtual_protect_data {
-		uint64_t handle;
-		uint64_t address;
-		uint32_t size;
-		uint32_t protection;
-		uint32_t old_protection;
-	};
-
-	struct get_module_base_data {
-		uint64_t handle;
-		uint64_t dllname;
-		uint32_t dllname_length;
-
-		uint64_t module_base;
-	};
-
-	enum struct DriverCall {
-		IsLoaded,
-		OpenProcess,
-		ReadProcessMemory,
-		WriteProcessMemory,
-		AllocateVirtualMemory,
-		FreeVirtualMemory,
-		ProtectVirtualMemory,
-		GetModuleBase
-	};
-
-	struct syscall_data {
-		uint32_t pad_0;
-		uint32_t pad_1;
-		uint32_t magic;
-		uint32_t syscall;
-		uint64_t arguments;
-	} SYSCALL_DATA, * PSYSCALL_DATA;
-
-	NTSTATUS execute_syscall(DriverCall syscall, void* args) {
-		syscall_data data;
-
-		data.pad_0 = 100;
-		data.pad_1 = 100;
-
-		data.magic = SYSCALL_UNIQUE;
-		data.syscall = static_cast<std::uint32_t>(syscall);
-		data.arguments = reinterpret_cast<uint64_t>(args);
-
-		return DeviceIoControl(
-			_handle,
-			CTL_CODE(FILE_DEVICE_BEEP, 0, METHOD_BUFFERED, FILE_SPECIAL_ACCESS),
-			&data,
-			sizeof(data),
-			&data,
-			sizeof(data),
-			nullptr,
-			nullptr
-		);
-	}
-
-	bool initialize() {
-		UNICODE_STRING device_name;
-		OBJECT_ATTRIBUTES attributes;
-
-		RtlInitUnicodeString(&device_name, L"\\Device\\Beep");
-
-		InitializeObjectAttributes(&attributes, &device_name, 0, NULL, NULL);
-
-		IO_STATUS_BLOCK IoStatus;
-
-		if (!NT_SUCCESS(NtCreateFile(&_handle, 0x3, &attributes, &IoStatus, nullptr, 0, 0x3, 0x3, 0, nullptr, 0)))
-			return false;
-
-		return _handle != nullptr;
-	}
-
-	bool is_driver_loaded() {
-		bool status = false;
-
-		(void)execute_syscall(DriverCall::IsLoaded, &status);
-
-		return status;
-	}
-
-	uint64_t open_process(uint32_t pid) {
-		open_handle_data data = {};
-
-		data.pid = pid;
-
-		(void)execute_syscall(DriverCall::OpenProcess, &data);
-
-		return data.handle;
-	}
-
-	bool read_memory(uint64_t handle, uint64_t address, void* buffer, uint32_t size) {
-		read_write_data data = {};
-
-		data.handle = handle;
-		data.address = address;
-		data.buffer = reinterpret_cast<uint64_t>(buffer);
-		data.size = size;
-
-		return execute_syscall(DriverCall::ReadProcessMemory, &data) == 1;
-	}
-
-	bool write_memory(uint64_t handle, uint64_t address, const void* buffer, uint32_t size) {
-		read_write_data data = {};
-
-		data.handle = handle;
-		data.address = address;
-		data.buffer = reinterpret_cast<uint64_t>(buffer);
-		data.size = size;
-
-		return execute_syscall(DriverCall::WriteProcessMemory, &data) == 1;
-	}
-
-	bool protect_virtual_memory(uint64_t handle, uint64_t address, uint32_t size, uint32_t protect, uint32_t* old_protect) {
-		virtual_protect_data data = {};
-
-		data.handle = handle;
-		data.address = address;
-		data.size = size;
-		data.protection = protect;
-
-		*old_protect = protect;
-
-		return execute_syscall(DriverCall::ProtectVirtualMemory, &data) == 1;
-	}
-
-	uint64_t get_module_base(uint64_t handle, const wchar_t* dllname) {
-		get_module_base_data data = {};
-
-		data.handle = handle;
-		data.dllname = reinterpret_cast<uint64_t>(dllname);
-		data.dllname_length = lstrlenW(dllname);
-
-		(void)execute_syscall(DriverCall::GetModuleBase, &data);
-
-		return data.module_base;
-	}
+    uint64_t get_module_base(uint64_t handle, const wchar_t* dllname) {
+        return interface->GetModuleBase((HANDLE)handle, dllname);
+    }
 }

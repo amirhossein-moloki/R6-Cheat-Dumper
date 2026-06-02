@@ -1,6 +1,6 @@
 #include "overlay.hpp"
 
-#include "minhook/MinHook.h"
+#include <MinHook.h>
 
 #include "renderer/renderer.hpp"
 

@@ -18,7 +18,7 @@ This document provides technical instructions for building and running the Rainb
 - Open `memdrv/memdrv.sln`.
 - Set configuration to **Release | x64**.
 - Build the project.
-- *Note*: Requires WDK. The project is now configured to use the latest installed Windows SDK and toolset for better portability.
+- *Note*: Requires WDK. The project is now configured to use the latest installed Windows SDK and toolset for better portability. Spectre Mitigation has been disabled to avoid the need for extra manual library installations.
 
 ### Offset Dumper (r6dumper)
 - Open `r6dumper/r6od.sln`.

@@ -33,7 +33,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <SpectreMitigation>true</SpectreMitigation>
+      <SpectreMitigation>false</SpectreMitigation>
       <PreprocessorDefinitions>_AMD64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -43,7 +43,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <SpectreMitigation>true</SpectreMitigation>
+      <SpectreMitigation>false</SpectreMitigation>
       <PreprocessorDefinitions>_AMD64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>

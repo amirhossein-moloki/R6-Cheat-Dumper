@@ -16,14 +16,8 @@
 #include "util/memory.hpp"
 
 void entry() {
-	if (!driver::is_driver_loaded()) {
-		if (MessageBoxA(nullptr, "Driver not loaded! Do you want to use User-Mode instead?", "Warning", MB_YESNO) == IDYES) {
-			driver::set_user_mode(true);
-		}
-		else {
-			exit(1);
-		}
-	}
+	// User-Mode is now default, no need to check driver
+	driver::set_user_mode(true);
 
 	overlay::enable();
 

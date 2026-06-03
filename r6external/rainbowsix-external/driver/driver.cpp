@@ -4,7 +4,7 @@
 #include <TlHelp32.h>
 
 namespace driver {
-	bool g_user_mode = false;
+	bool g_user_mode = true;
 
 	void set_user_mode(bool user_mode) {
 		g_user_mode = user_mode;

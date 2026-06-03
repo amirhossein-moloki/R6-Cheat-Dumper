@@ -9,16 +9,21 @@ This document provides technical instructions for building and running the Rainb
 
 ## Prerequisites
 - **Visual Studio 2019/2022** with "Desktop development with C++".
-- **Windows SDK**.
+- **Windows SDK** (Latest Version).
 - **Windows Driver Kit (WDK)** (Required for `memdrv`).
+- **NuGet Package Manager** (For dependency restoration).
 
 ## Building
 
 ### Kernel Driver (memdrv)
-- Open `memdrv/memdrv/memdrv.sln`.
+- Open `memdrv/memdrv.sln`.
 - Set configuration to **Release | x64**.
 - Build the project.
-- *Note*: Requires WDK. Must be loaded using a driver mapper or by enabling Test Mode.
+- *Alternative*: Build via command line:
+  ```bash
+  msbuild memdrv.sln /p:Configuration=Release /p:Platform=x64 /p:SpectreMitigation=false /t:Rebuild /v:minimal
+  ```
+- *Note*: Requires WDK. The driver creates a device named `\Device\MemDrv`. Must be loaded using a driver mapper or by enabling Test Mode.
 
 ### Offset Dumper (r6dumper)
 - Open `r6dumper/r6od.sln`.
@@ -29,7 +34,9 @@ This document provides technical instructions for building and running the Rainb
 ### External Cheat (r6external)
 - Open `r6external/rainbowsix-external.sln`.
 - Set configuration to **Release | x64**.
+- Restore NuGet packages before building.
 - This project builds as a **DLL**. Use a DLL injector or change project settings to **Application (.exe)** if preferred.
+- *Note*: Uses a local version of ImGui and MinHook (located in `overlay/`).
 - Build the project.
 
 ## Execution Sequence

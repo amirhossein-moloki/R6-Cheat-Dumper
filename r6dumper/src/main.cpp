@@ -9,8 +9,20 @@ uint8_t* memory;
 
 int main()
 {
+    printf("choose mode: 1 for kernel, 2 for user mode: ");
+    int mode;
+    std::cin >> mode;
+
+    if (mode == 2) {
+        driver::set_user_mode(true);
+        printf("[+] user mode selected\n");
+    } else {
+        driver::set_user_mode(false);
+        printf("[+] kernel mode selected\n");
+    }
+
     if (!driver::initialize())
-        std::cout << "driver init failed\n";
+        std::cout << "driver/interface init failed\n";
 
     DWORD pid;
     GetWindowThreadProcessId(FindWindowA(nullptr, "Rainbow Six"), &pid);
@@ -35,7 +47,7 @@ int main()
 
     memory = new uint8_t[seg_end(segment::data)];
 
-    if (driver::read_memory(handle, base, memory, (uint32_t)seg_end(segment::data))) {
+    if (!driver::read_memory(handle, base, memory, (uint32_t)seg_end(segment::data))) {
         std::cout << "error reading memory\n";
         std::cin.get();
         return 1;

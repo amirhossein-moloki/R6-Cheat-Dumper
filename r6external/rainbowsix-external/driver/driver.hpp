@@ -4,6 +4,10 @@
 #include <iostream>
 
 namespace driver {
+	extern bool g_user_mode;
+
+	extern void set_user_mode(bool user_mode);
+
 	extern bool is_driver_loaded();
 	
 	extern uint64_t open_process(uint32_t pid);

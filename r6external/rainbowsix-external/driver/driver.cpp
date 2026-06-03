@@ -1,8 +1,15 @@
 #include "driver.hpp"
 
 #include <Windows.h>
+#include <TlHelp32.h>
 
 namespace driver {
+	bool g_user_mode = false;
+
+	void set_user_mode(bool user_mode) {
+		g_user_mode = user_mode;
+	}
+
 	constexpr auto SYSCALL_UNIQUE = 0x133;
 
 	using fnNtConvertBetweenAuxiliaryCounterAndPerformanceCounter = void* (NTAPI*)(void*, void*, void*, void*);
@@ -81,6 +88,8 @@ namespace driver {
 	}
 
 	bool is_driver_loaded() {
+		if (g_user_mode) return true;
+
 		bool status = false;
 
 		(void)execute_syscall(DriverCall::IsLoaded, &status);
@@ -89,6 +98,10 @@ namespace driver {
 	}
 
 	uint64_t open_process(uint32_t pid) {
+		if (g_user_mode) {
+			return reinterpret_cast<uint64_t>(OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid));
+		}
+
 		open_handle_data data = {};
 
 		data.pid = pid;
@@ -99,6 +112,11 @@ namespace driver {
 	}
 
 	bool read_memory(uint64_t handle, uintptr_t address, uint8_t* buffer, uint32_t size) {
+		if (g_user_mode) {
+			SIZE_T bytes_read;
+			return ReadProcessMemory(reinterpret_cast<HANDLE>(handle), reinterpret_cast<LPCVOID>(address), buffer, size, &bytes_read);
+		}
+
 		read_write_data data = {};
 
 		data.handle = handle;
@@ -110,6 +128,11 @@ namespace driver {
 	}
 
 	bool write_memory(uint64_t handle, uintptr_t address, const uint8_t* buffer, uint32_t size) {
+		if (g_user_mode) {
+			SIZE_T bytes_written;
+			return WriteProcessMemory(reinterpret_cast<HANDLE>(handle), reinterpret_cast<LPVOID>(address), const_cast<uint8_t*>(buffer), size, &bytes_written);
+		}
+
 		read_write_data data = {};
 
 		data.handle = handle;
@@ -121,6 +144,13 @@ namespace driver {
 	}
 
 	bool protect_virtual_memory(uint64_t handle, uintptr_t address, uint32_t size, uint32_t protect, uint32_t* old_protect) {
+		if (g_user_mode) {
+			DWORD old_prot;
+			bool status = VirtualProtectEx(reinterpret_cast<HANDLE>(handle), reinterpret_cast<LPVOID>(address), size, protect, &old_prot);
+			if (old_protect) *old_protect = old_prot;
+			return status;
+		}
+
 		virtual_protect_data data = {};
 
 		data.handle = handle;
@@ -134,6 +164,25 @@ namespace driver {
 	}
 
 	uintptr_t get_module_base(uint64_t handle, const wchar_t* dllname) {
+		if (g_user_mode) {
+			uintptr_t base = 0;
+			HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, GetProcessId(reinterpret_cast<HANDLE>(handle)));
+			if (hSnapshot != INVALID_HANDLE_VALUE) {
+				MODULEENTRY32W me;
+				me.dwSize = sizeof(me);
+				if (Module32FirstW(hSnapshot, &me)) {
+					do {
+						if (_wcsicmp(me.szModule, dllname) == 0) {
+							base = reinterpret_cast<uintptr_t>(me.modBaseAddr);
+							break;
+						}
+					} while (Module32NextW(hSnapshot, &me));
+				}
+				CloseHandle(hSnapshot);
+			}
+			return base;
+		}
+
 		get_module_base_data data = {};
 
 		data.handle = handle;

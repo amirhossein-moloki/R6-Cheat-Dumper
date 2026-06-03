@@ -58,20 +58,16 @@
     <Inf Include="driver.inf" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="hooks\hooks.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="routines\routines.cpp" />
     <ClCompile Include="util\clean.cpp" />
-    <ClCompile Include="util\hk.cpp" />
     <ClCompile Include="util\memory.cpp" />
     <ClCompile Include="util\process.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="defs.hpp" />
-    <ClInclude Include="hooks\hooks.hpp" />
     <ClInclude Include="routines\routines.hpp" />
     <ClInclude Include="util\clean.hpp" />
-    <ClInclude Include="util\hk.hpp" />
     <ClInclude Include="util\memory.hpp" />
     <ClInclude Include="util\process.hpp" />
   </ItemGroup>

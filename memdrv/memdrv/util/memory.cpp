@@ -1,5 +1,7 @@
 #include "memory.hpp"
 
+#pragma warning(disable: 4201) // nonstandard extension used: nameless struct/union
+
 // Internal NT structures not in WDK headers
 typedef struct _LDR_DATA_TABLE_ENTRY {
     LIST_ENTRY InLoadOrderLinks;

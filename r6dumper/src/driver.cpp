@@ -60,25 +60,60 @@ HANDLE KernelInterface::GetProcessId(const wchar_t* processName) {
 // Legacy wrappers
 namespace driver {
     KernelInterface* g_interface = new KernelInterface();
+    bool g_user_mode = false;
+
+    void set_user_mode(bool user_mode) {
+        g_user_mode = user_mode;
+    }
 
     bool initialize() {
+        if (g_user_mode) return true;
         return g_interface->Initialize();
     }
 
     uint64_t open_process(uint32_t pid) {
-        // In the new system, handle is just PID
+        if (g_user_mode) {
+            return (uint64_t)OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+        }
+        // In the kernel system, handle is just PID
         return (uint64_t)pid;
     }
 
     bool read_memory(uint64_t handle, uint64_t address, void* buffer, uint32_t size) {
+        if (g_user_mode) {
+            SIZE_T bytesRead;
+            return ReadProcessMemory((HANDLE)handle, (LPCVOID)address, buffer, size, &bytesRead);
+        }
         return g_interface->ReadMemory((HANDLE)handle, address, buffer, (UINT64)size);
     }
 
     bool write_memory(uint64_t handle, uint64_t address, const void* buffer, uint32_t size) {
+        if (g_user_mode) {
+            SIZE_T bytesWritten;
+            return WriteProcessMemory((HANDLE)handle, (LPVOID)address, buffer, size, &bytesWritten);
+        }
         return g_interface->WriteMemory((HANDLE)handle, address, (void*)buffer, (UINT64)size);
     }
 
     uint64_t get_module_base(uint64_t handle, const wchar_t* dllname) {
+        if (g_user_mode) {
+            uint64_t base = 0;
+            HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, GetProcessId((HANDLE)handle));
+            if (hSnapshot != INVALID_HANDLE_VALUE) {
+                MODULEENTRY32W me;
+                me.dwSize = sizeof(me);
+                if (Module32FirstW(hSnapshot, &me)) {
+                    do {
+                        if (_wcsicmp(me.szModule, dllname) == 0) {
+                            base = (uint64_t)me.modBaseAddr;
+                            break;
+                        }
+                    } while (Module32NextW(hSnapshot, &me));
+                }
+                CloseHandle(hSnapshot);
+            }
+            return base;
+        }
         return g_interface->GetModuleBase((HANDLE)handle, dllname);
     }
 }

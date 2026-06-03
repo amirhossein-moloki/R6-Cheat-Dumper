@@ -3,6 +3,7 @@
 
 #include <Windows.h>
 #include <iostream>
+#include <TlHelp32.h>
 
 #define IOCTL_BASE 0x800
 
@@ -50,6 +51,9 @@ public:
 // Legacy interface support if needed by other parts of the project
 namespace driver {
     extern KernelInterface* g_interface;
+    extern bool g_user_mode;
+
+    void set_user_mode(bool user_mode);
     bool initialize();
     uint64_t open_process(uint32_t pid); // In new system, we use PID directly
     bool read_memory(uint64_t handle, uint64_t address, void* buffer, uint32_t size);

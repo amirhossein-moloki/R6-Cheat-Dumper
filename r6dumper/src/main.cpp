@@ -27,24 +27,34 @@ int main()
     }
 
     DWORD pid = 0;
-    HWND window = FindWindowA(nullptr, "Rainbow Six");
-    if (window) {
-        GetWindowThreadProcessId(window, &pid);
-    } else {
-        // Fallback to process name search
-        HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-        if (snapshot != INVALID_HANDLE_VALUE) {
-            PROCESSENTRY32W processEntry;
-            processEntry.dwSize = sizeof(processEntry);
-            if (Process32FirstW(snapshot, &processEntry)) {
-                do {
-                    if (wcscmp(processEntry.szExeFile, L"RainbowSix.exe") == 0) {
-                        pid = processEntry.th32ProcessID;
-                        break;
-                    }
-                } while (Process32NextW(snapshot, &processEntry));
-            }
-            CloseHandle(snapshot);
+
+    // Professional approach: Scan process list first for exact executable matches
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snapshot != INVALID_HANDLE_VALUE) {
+        PROCESSENTRY32W processEntry;
+        processEntry.dwSize = sizeof(processEntry);
+        if (Process32FirstW(snapshot, &processEntry)) {
+            do {
+                // Check for standard and Vulkan versions of the game
+                if (wcscmp(processEntry.szExeFile, L"RainbowSix.exe") == 0 ||
+                    wcscmp(processEntry.szExeFile, L"RainbowSix_Vulkan.exe") == 0) {
+                    pid = processEntry.th32ProcessID;
+                    break; // Found the actual game process
+                }
+                // Also check for the BE launcher as a fallback/hint
+                if (wcscmp(processEntry.szExeFile, L"RainbowSix_BE.exe") == 0) {
+                    pid = processEntry.th32ProcessID;
+                }
+            } while (Process32NextW(snapshot, &processEntry));
+        }
+        CloseHandle(snapshot);
+    }
+
+    // Fallback to window title if process snapshot didn't find the main executables
+    if (pid == 0) {
+        HWND window = FindWindowA(nullptr, "Rainbow Six");
+        if (window) {
+            GetWindowThreadProcessId(window, &pid);
         }
     }
 

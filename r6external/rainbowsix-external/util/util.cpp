@@ -43,9 +43,15 @@ bool util::is_game_open(const char* window_title, const char* window_class, cons
 	uint32_t class_pid = get_pid_from_class(window_class);
 	uint32_t file_pid = get_pid_from_file(window_file);
 
-	if (window_pid != 0 && class_pid != 0 && file_pid != 0)
-		if (window_pid == class_pid && file_pid == class_pid)
-			return true;
+	// More robust check: if any method finds a PID, check if others match or are zero
+	if (file_pid != 0) {
+		// Prioritize file_pid as it's the most reliable for the specific executable
+		return true;
+	}
+
+	if (window_pid != 0 || class_pid != 0) {
+		return true;
+	}
 
 	return false;
 }

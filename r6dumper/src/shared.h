@@ -46,7 +46,7 @@ static uint64_t seg_end(segment seg) {
 namespace shared {
 	// compares memory with skips
 	static bool cmp_sig(uint8_t sig[], uint64_t address, size_t len, const char* skips = "") {
-		if (skips == "") {
+		if (skips == nullptr || skips[0] == '\0') {
 			if (!memcmp(sig, memory + address, len))
 				return false;
 		}
@@ -86,12 +86,12 @@ namespace shared {
 		uint64_t size = (seg_end(seg) - addr) / threads.size();
 
 		for (int i = 0; i < threads.size() - 1; i++) {
-			threads[i] = new std::thread(search_loop, addr, size);
+			threads[i] = new (std::nothrow) std::thread(search_loop, addr, size);
 
 			addr += size;
 		}
 
-		threads.back() = new std::thread(search_loop, addr, seg_end(seg) - seg_start(seg) - size * (threads.size() - 1));
+		threads.back() = new (std::nothrow) std::thread(search_loop, addr, seg_end(seg) - seg_start(seg) - size * (threads.size() - 1));
 
 		for (int i = 0; i < threads.size(); i++) {
 			threads[i]->join();
@@ -148,12 +148,12 @@ namespace shared {
 		uint64_t size = (seg_end(segment::text) - addr) / threads.size();
 
 		for (int i = 0; i < threads.size() - 1; i++) {
-			threads[i] = new std::thread(search_loop, addr, size);
+			threads[i] = new (std::nothrow) std::thread(search_loop, addr, size);
 
 			addr += size;
 		}
 
-		threads.back() = new std::thread(search_loop, addr, seg_end(segment::text) - seg_start(segment::text) - size * (threads.size() - 1));
+		threads.back() = new (std::nothrow) std::thread(search_loop, addr, seg_end(segment::text) - seg_start(segment::text) - size * (threads.size() - 1));
 
 		for (int i = 0; i < threads.size(); i++) {
 			threads[i]->join();
@@ -167,8 +167,9 @@ namespace shared {
 	static uint8_t get_instruction_length(uint64_t offset) {
 		for (uint64_t i = offset + 1; i < offset + 0x10; i++) {
 			if (memory[i] == 0x48 || memory[i] == 0x4C)
-				return i - offset;
+				return (uint8_t)(i - offset);
 		}
+		return 0;
 	}
 
 	// extracts an offset from an instruction

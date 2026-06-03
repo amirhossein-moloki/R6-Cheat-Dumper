@@ -6,7 +6,7 @@
 
 template <typename T>
 T clip_number( const T& n, const T& lower, const T& upper ) {
-	return max( lower, min( n, upper ) );
+	return (n < lower) ? lower : (n > upper) ? upper : n;
 }
 
 typedef float matrix_t [ 3 ] [ 4 ];

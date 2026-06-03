@@ -1,3 +1,4 @@
+#include <cstdint>
 #include "visuals.hpp"
 
 #include "../../game/game_util.h"
@@ -31,7 +32,7 @@ void visuals::esp() {
 
 	entity local_player = game::get_local_entity();
 
-	if (local_player == 0)
+	if (local_player.get_obj() == 0)
 		return;
 
 	uintptr_t entity_list = globals::memory.read<uintptr_t>(globals::game_manager + offsets::game_manager_entity_list);
@@ -94,7 +95,7 @@ void visuals::esp() {
 
 		// health bar
 		float max_health = 120.f;
-		if (globals::memory.read<byte>(entity_object.get_obj() + 0x58) == 0) // if bot max is 100
+		if (globals::memory.read<unsigned char>(entity_object.get_obj() + 0x58) == 0) // if bot max is 100
 			max_health = 100.f;
 
 		float g = 255.f * health / 120.f;
@@ -122,7 +123,7 @@ void visuals::esp() {
 
 		// character information
 		std::string character = "";
-		if (globals::memory.read<byte>(entity_object.get_obj() + 0x58) == 0)
+		if (globals::memory.read<unsigned char>(entity_object.get_obj() + 0x58) == 0)
 			character = "TERRORIST"; // all bots are terrorist right?
 		else {
 			if (health < 20)
@@ -135,7 +136,7 @@ void visuals::esp() {
 
 		// name esp
 		/*std::string username = "TEST";
-		if (globals::memory.read<byte>(entity_object.get_obj() + 0x58) == 0)
+		if (globals::memory.read<unsigned char>(entity_object.get_obj() + 0x58) == 0)
 			username = "BOT";
 		else
 			username = entity_object.get_username();

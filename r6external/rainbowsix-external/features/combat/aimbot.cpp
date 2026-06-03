@@ -20,7 +20,7 @@ void combat::aimbot() {
 		if (local_entity.is_firing() != 1) {
 			if (local_entity.is_firing() != 3)
 				norecoil(1, 0.25f, 0.25f, 0.5f);
-			globals::targeted_entity = 0;
+			globals::targeted_entity = entity(0);
 			return;// your not shooting your gun so why tf would i aim
 		}
 	}
@@ -35,7 +35,7 @@ void combat::aimbot() {
 	if (entity_count == 0)
 		return; // if entity list is fine this should be good
 
-	entity closest_entity = NULL;
+	entity closest_entity = entity(0);
 	float closest_bone_dist = config::aimbot_fov;
 	if (config::aimbot_silent_enabled)
 		closest_bone_dist = 1000000;
@@ -63,7 +63,7 @@ void combat::aimbot() {
 			if (bone_screen_pos.z < 1.f && !config::aimbot_silent_enabled)
 				continue;
 			
-			const float bone_distance = abs(bone_screen_pos.dist_to(vec3_t(globals::window_horizontal_size / 2.f, globals::window_vertical_size / 2.f, bone_screen_pos.z)));
+			const float bone_distance = std::abs(bone_screen_pos.dist_to(vec3_t((float)globals::window_horizontal_size / 2.f, (float)globals::window_vertical_size / 2.f, bone_screen_pos.z)));
 			if (bone_distance < closest_bone_dist) {
 				closest_bone_dist = bone_distance;
 				closest_bone = b;
@@ -84,6 +84,6 @@ void combat::aimbot() {
 	}
 	else { // why not set smoothing value and shit back just in the case something fucked up :)
 		// there is no target so do what you wish instead
-		globals::targeted_entity = 0;
+		globals::targeted_entity = entity(0);
 	}
 }

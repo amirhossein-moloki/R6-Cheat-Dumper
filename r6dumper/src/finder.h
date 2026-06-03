@@ -26,7 +26,7 @@ namespace finder {
 
 				int64_t extra_offset = 0;
 				if (contents.find(SIG_SEPERATOR) < contents.find(ENTRY_SEPERATOR))
-					extra_offset = std::atoi(contents.substr(contents.find(SIG_SEPERATOR) + strlen(SIG_SEPERATOR), contents.find(SIG_SEPERATOR) - contents.find(ENTRY_SEPERATOR) - strlen(SIG_SEPERATOR)).c_str());
+					extra_offset = std::atoll(contents.substr(contents.find(SIG_SEPERATOR) + strlen(SIG_SEPERATOR), contents.find(SIG_SEPERATOR) - contents.find(ENTRY_SEPERATOR) - strlen(SIG_SEPERATOR)).c_str());
 
 				std::vector<std::thread*> threads;
 				threads.resize(THREAD_COUNT);
@@ -35,14 +35,16 @@ namespace finder {
 
 				for (int sig_position = 0; sig_position < 0x200; sig_position++) {
 					for (uint64_t size = 0x10; sig_position + size < 0x200; size++) {
-						uint8_t* data = new uint8_t[size];
+						uint8_t* data = new (std::nothrow) uint8_t[size];
 
 						memcpy(data, raw_data + sig_position, size);
 
 						auto matches = shared::sig_scan(data, size, segment::text);
 
-						if (matches.empty())
+						if (matches.empty()) {
+							delete[] data;
 							break;
+						}
 
 						if (matches.size() == 1) {
 							if (extra_offset != 0)
@@ -56,7 +58,7 @@ namespace finder {
 							break;
 						}
 
-						delete data;
+						delete[] data;
 					}
 				}
 			}
@@ -73,7 +75,7 @@ namespace finder {
 					contents = contents.substr(idx + strlen(SEPERATOR));
 					idx = contents.find(SEPERATOR);
 
-					int64_t offset = std::atoi(contents.substr(0, idx).c_str());
+					int64_t offset = std::atoll(contents.substr(0, idx).c_str());
 
 					printf("search string %s, offset %d\n", str_to_find.c_str(), offset);
 

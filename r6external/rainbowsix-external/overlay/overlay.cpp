@@ -1,3 +1,4 @@
+#include <cstdint>
 #include "overlay.hpp"
 
 #include <MinHook.h>
@@ -27,6 +28,7 @@ namespace overlay {
 
 	static uintptr_t o_CHwFullScreenRenderTarget_Present = 0;
 
+	struct RenderTargetPresentParameters;
 	using fn_CHwFullScreenRenderTarget_Present = __int64(__fastcall*)(class CHwFullScreenRenderTarget* _this, intptr_t a2, int8_t a3, const struct RenderTargetPresentParameters* a4);
 
 	bool find_target_present() {
@@ -36,8 +38,7 @@ namespace overlay {
 		//address = address + *reinterpret_cast<uint32_t*>(address) + 5;
 		//address = address - 0x100000000;
 
-		address += static_cast<uintptr_t>(*reinterpret_cast<uint32_t*>(address + 0x1)) + 0x5;
-		address -= 0x100000000;
+		address += *reinterpret_cast<int32_t*>(address + 0x1) + 0x5;
 
 		_CHwFullScreenRenderTarget_Present = address;
 		_CHwFullScreenRenderTarget_SwapChainBase_Offset = *reinterpret_cast<uint8_t*>(address + 223 + 3);
@@ -86,9 +87,9 @@ namespace overlay {
 			menu_open = !menu_open;
 			if (globals::input_manager != 0) {
 				if (menu_open)
-					globals::memory.write<byte>(globals::input_manager + 0x79, 1);
+					globals::memory.write<unsigned char>(globals::input_manager + 0x79, 1);
 				else
-					globals::memory.write<byte>(globals::input_manager + 0x79, 0);
+					globals::memory.write<unsigned char>(globals::input_manager + 0x79, 0);
 			}
 		}
 

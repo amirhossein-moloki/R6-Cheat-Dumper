@@ -1,9 +1,10 @@
+#include <cstdint>
 #include "visuals.hpp"
 #include "../../offsets.hpp"
 #include "../../globals.hpp"
 #include "../../game/game_util.h"
 
-void enabled_marker(uintptr_t entity_object, byte enable) {
+void enabled_marker(uintptr_t entity_object, unsigned char enable) {
 	uintptr_t chain = globals::memory.read<uintptr_t>(entity_object + offsets::entity_entity_info);
 	
 	if (chain == 0)
@@ -22,8 +23,8 @@ void enabled_marker(uintptr_t entity_object, byte enable) {
 		if (globals::memory.read<uintptr_t>(entity_chain) != globals::module_base + offsets::vtable)
 			continue;
 
-		globals::memory.write<byte>(entity_chain + 0x552, enable);
-		globals::memory.write<byte>(entity_chain + 0x554, enable);
+		globals::memory.write<unsigned char>(entity_chain + 0x552, enable);
+		globals::memory.write<unsigned char>(entity_chain + 0x554, enable);
 	}
 }
 

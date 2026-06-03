@@ -69,7 +69,7 @@ vec2_t::~vec2_t(void) {};
 
 void vec3_t::clamp(void) {
 	x = clip_number(x, -89.0f, 89.0f);
-	y = clip_number(std::remainder(y, 360.0f), -180.0f, 180.0f);
+	y = clip_number(std::fmodf(y, 360.0f), -180.0f, 180.0f);
 	z = clip_number(z, -50.0f, 50.0f);
 }
 
@@ -146,7 +146,7 @@ vec3_t vec3_t::cross(vec3_t cross) {
 
 void vec2_t::clamp(void) {
 	x = clip_number(x, -89.0f, 89.0f);
-	y = clip_number(std::remainderf(y, 360.0f), -180.0f, 180.0f);
+	y = clip_number(std::fmodf(y, 360.0f), -180.0f, 180.0f);
 }
 
 void vec2_t::normalize(void) {

@@ -19,7 +19,10 @@ bool KernelInterface::ReadMemory(HANDLE pid, UINT64 address, void* buffer, UINT6
     request.Buffer = buffer;
     request.Size = size;
 
-    return DeviceIoControl(m_hDevice, IOCTL_MEMORY_READ, &request, sizeof(request), &request, sizeof(request), NULL, NULL);
+    if (DeviceIoControl(m_hDevice, IOCTL_MEMORY_READ, &request, sizeof(request), &request, sizeof(request), NULL, NULL)) {
+        return request.Status == 0;
+    }
+    return false;
 }
 
 bool KernelInterface::WriteMemory(HANDLE pid, UINT64 address, void* buffer, UINT64 size) {
@@ -29,30 +32,39 @@ bool KernelInterface::WriteMemory(HANDLE pid, UINT64 address, void* buffer, UINT
     request.Buffer = buffer;
     request.Size = size;
 
-    return DeviceIoControl(m_hDevice, IOCTL_MEMORY_WRITE, &request, sizeof(request), &request, sizeof(request), NULL, NULL);
+    if (DeviceIoControl(m_hDevice, IOCTL_MEMORY_WRITE, &request, sizeof(request), &request, sizeof(request), NULL, NULL)) {
+        return request.Status == 0;
+    }
+    return false;
 }
 
 UINT64 KernelInterface::GetModuleBase(HANDLE pid, const wchar_t* moduleName) {
     MODULE_REQUEST request;
     request.ProcessId = pid;
     if (moduleName) {
-        wcscpy_s(request.ModuleName, moduleName);
+        wcscpy_s(request.ModuleName, 256, moduleName);
     } else {
         request.ModuleName[0] = L'\0';
     }
 
     if (DeviceIoControl(m_hDevice, IOCTL_MODULE_BASE, &request, sizeof(request), &request, sizeof(request), NULL, NULL)) {
-        return request.BaseAddress;
+        if (request.Status == 0)
+            return request.BaseAddress;
     }
     return 0;
 }
 
 HANDLE KernelInterface::GetProcessId(const wchar_t* processName) {
     PID_REQUEST request;
-    wcscpy_s(request.ProcessName, processName);
+    if (processName) {
+        wcscpy_s(request.ProcessName, 256, processName);
+    } else {
+        request.ProcessName[0] = L'\0';
+    }
 
     if (DeviceIoControl(m_hDevice, IOCTL_PROCESS_ID, &request, sizeof(request), &request, sizeof(request), NULL, NULL)) {
-        return request.ProcessId;
+        if (request.Status == 0)
+            return request.ProcessId;
     }
     return NULL;
 }
@@ -66,7 +78,6 @@ namespace driver {
     }
 
     uint64_t open_process(uint32_t pid) {
-        // In the new system, handle is just PID
         return (uint64_t)pid;
     }
 

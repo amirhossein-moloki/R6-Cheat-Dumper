@@ -16,19 +16,19 @@ namespace adder {
 
 		printf("|--0x%" PRIX64 "\n", address);
 
-		int max_size = str_refs.size();
-		for (int i = 0; i < max_size; i++) {
+		size_t max_size = str_refs.size();
+		for (size_t i = 0; i < max_size; i++) {
 			auto& str_ref = str_refs[i];
 
-			printf("|----%s with offset %d ", memory + str_ref.string_address, str_ref.offset_to_desired_address);
+			printf("|----%s with offset %lld ", memory + str_ref.string_address, str_ref.offset_to_desired_address);
 
 
 			// TODO: cache ref counts
 
 			auto refs_to_string = shared::find_xrefs(str_ref.string_address);
-			str_ref.reference_count = refs_to_string.size();
+			str_ref.reference_count = (int64_t)refs_to_string.size();
 
-			printf("has %d refs", str_ref.reference_count);
+			printf("has %lld refs", str_ref.reference_count);
 
 			if (!shared::is_string_ref_unique(&str_ref)) {
 				printf(" but is not a unique reference\n");
@@ -50,7 +50,7 @@ namespace adder {
 
 		of << name << NAME_SEPERATOR << SIG_SEPERATOR;
 
-		for (int i = address - 0x100; i < address + 0x100; i++)
+		for (uint64_t i = address - 0x100; i < address + 0x100; i++)
 			of << memory[i];
 
 		if (extra_offset != 0)
@@ -82,7 +82,7 @@ namespace adder {
 				return;
 			}
 
-			printf("found %zd refs to offset\n", offset_refs.size());
+			printf("found %zu refs to offset\n", offset_refs.size());
 
 			printf("0x%" PRIX64 "\n", offset);
 
@@ -113,8 +113,8 @@ namespace adder {
 			printf("Encryption value detected, enter offset: ");
 
 			uint64_t enc_value = offset;
-			uint64_t offset;
-			std::cin >> std::hex >> offset;
+			uint64_t target_offset;
+			std::cin >> std::hex >> target_offset;
 
 			auto refs = shared::find_xrefs(enc_value, 0, 0, 0, false);
 
@@ -131,7 +131,7 @@ namespace adder {
 
 			if (str_refs.empty()) {
 				for (auto& ref : refs) {
-					uint64_t offset_ref = shared::find_offset_ref_near(ref, offset);
+						uint64_t offset_ref = shared::find_offset_ref_near(ref, target_offset);
 
 					if (offset_ref != 0) {
 						do_hex_dump(name, ref, offset_ref - ref);
@@ -165,9 +165,11 @@ namespace adder {
 
 		// if we have strs with one ref then discard any with more
 		if (str_refs.front().reference_count == 1) {
-			for (int i = 1; i < str_refs.size(); i++) {
-				if (str_refs[i].reference_count > 1)
+			for (size_t i = 1; i < str_refs.size(); i++) {
+				if (str_refs[i].reference_count > 1) {
 					str_refs.resize(i);
+					break;
+				}
 			}
 
 			for (auto& ref : str_refs)
@@ -175,7 +177,7 @@ namespace adder {
 		}
 
 		else {
-			for (int i = 0; i < str_refs.size(); i++) {
+			for (size_t i = 0; i < str_refs.size(); i++) {
 				if (!shared::is_string_ref_unique(&str_refs[i])) {
 					str_refs.erase(str_refs.begin() + i);
 					i--;

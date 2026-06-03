@@ -121,7 +121,7 @@ namespace shared {
 			for (uint64_t i = start; i < start + size; i++) {
 				uint32_t rel_address;
 				if (relative) {
-					rel_address = offset - i - 0x7;
+					rel_address = static_cast<uint32_t>(offset - i - 0x7);
 					memcpy(sig, &rel_address, sizeof(uint32_t));
 				}
 
@@ -167,8 +167,9 @@ namespace shared {
 	static uint8_t get_instruction_length(uint64_t offset) {
 		for (uint64_t i = offset + 1; i < offset + 0x10; i++) {
 			if (memory[i] == 0x48 || memory[i] == 0x4C)
-				return i - offset;
+				return static_cast<uint8_t>(i - offset);
 		}
+		return 0;
 	}
 
 	// extracts an offset from an instruction
@@ -197,10 +198,10 @@ namespace shared {
 	}
 
 	// turns relative offset instruction into an absolute offset
-	static uint32_t extract_relative_offset(uint64_t offset) {
+	static uint64_t extract_relative_offset(uint64_t offset) {
 		// convert relative to absolute
-		uint32_t ret;
-		ret = offset + static_cast<uint64_t>(extract_offset(offset)) + 0x7;
+		uint64_t ret;
+		ret = offset + extract_offset(offset) + 0x7;
 
 		return ret;
 	}
@@ -217,9 +218,9 @@ namespace shared {
 		return true;
 	}
 
-	static uint64_t find_offset_ref_near(uint64_t offset, uint32_t desired_offset) {
+	static uint64_t find_offset_ref_near(uint64_t offset, uint64_t desired_offset) {
 		for (uint64_t i = offset; i < offset + 0x100; i++) {
-			if (extract_offset(i) == desired_offset || extract_offset(i) == desired_offset)
+			if (extract_offset(i) == desired_offset)
 				return i;
 		}
 

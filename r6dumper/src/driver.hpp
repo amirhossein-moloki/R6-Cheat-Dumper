@@ -49,7 +49,7 @@ public:
 
 // Legacy interface support if needed by other parts of the project
 namespace driver {
-    extern KernelInterface* interface;
+    extern KernelInterface* g_interface;
     bool initialize();
     uint64_t open_process(uint32_t pid); // In new system, we use PID directly
     bool read_memory(uint64_t handle, uint64_t address, void* buffer, uint32_t size);

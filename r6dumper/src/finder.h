@@ -73,9 +73,9 @@ namespace finder {
 					contents = contents.substr(idx + strlen(SEPERATOR));
 					idx = contents.find(SEPERATOR);
 
-					int64_t offset = std::atoi(contents.substr(0, idx).c_str());
+					int64_t offset = std::stoll(contents.substr(0, idx).c_str());
 
-					printf("search string %s, offset %d\n", str_to_find.c_str(), offset);
+					printf("search string %s, offset %lld\n", str_to_find.c_str(), offset);
 
 					char* cstr = const_cast<char*>(str_to_find.c_str());
 					auto vec = shared::sig_scan(reinterpret_cast<uint8_t*>(cstr), str_to_find.length() + 1, segment::rdata);

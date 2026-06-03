@@ -33,7 +33,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <SpectreMitigation>true</SpectreMitigation>
+      <SpectreMitigation>false</SpectreMitigation>
       <PreprocessorDefinitions>_AMD64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(WindowsSdkDir)Include\$(TargetPlatformVersion)\km;$(WindowsSdkDir)Include\$(TargetPlatformVersion)\shared;$(WindowsSdkDir)Include\$(TargetPlatformVersion)\um;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -45,7 +45,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <SpectreMitigation>true</SpectreMitigation>
+      <SpectreMitigation>false</SpectreMitigation>
       <PreprocessorDefinitions>_AMD64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(WindowsSdkDir)Include\$(TargetPlatformVersion)\km;$(WindowsSdkDir)Include\$(TargetPlatformVersion)\shared;$(WindowsSdkDir)Include\$(TargetPlatformVersion)\um;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>

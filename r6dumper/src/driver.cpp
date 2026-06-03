@@ -59,10 +59,10 @@ HANDLE KernelInterface::GetProcessId(const wchar_t* processName) {
 
 // Legacy wrappers
 namespace driver {
-    KernelInterface* interface = new KernelInterface();
+    KernelInterface* g_interface = new KernelInterface();
 
     bool initialize() {
-        return interface->Initialize();
+        return g_interface->Initialize();
     }
 
     uint64_t open_process(uint32_t pid) {
@@ -71,14 +71,14 @@ namespace driver {
     }
 
     bool read_memory(uint64_t handle, uint64_t address, void* buffer, uint32_t size) {
-        return interface->ReadMemory((HANDLE)handle, address, buffer, (UINT64)size);
+        return g_interface->ReadMemory((HANDLE)handle, address, buffer, (UINT64)size);
     }
 
     bool write_memory(uint64_t handle, uint64_t address, const void* buffer, uint32_t size) {
-        return interface->WriteMemory((HANDLE)handle, address, (void*)buffer, (UINT64)size);
+        return g_interface->WriteMemory((HANDLE)handle, address, (void*)buffer, (UINT64)size);
     }
 
     uint64_t get_module_base(uint64_t handle, const wchar_t* dllname) {
-        return interface->GetModuleBase((HANDLE)handle, dllname);
+        return g_interface->GetModuleBase((HANDLE)handle, dllname);
     }
 }

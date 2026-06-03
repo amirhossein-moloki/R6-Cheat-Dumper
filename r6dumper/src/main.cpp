@@ -24,7 +24,7 @@ int main()
         return 1;
     }
 
-    base = driver::get_module_base(pid, L"RainbowSix.exe");
+    base = driver::get_module_base((uint64_t)pid, L"RainbowSix.exe");
 
     if (base == 0) {
         std::cout << "[-] failed to find module base!" << std::endl;
@@ -35,7 +35,7 @@ int main()
 
     memory = new uint8_t[seg_end(segment::data)];
 
-    if (driver::read_memory(handle, base, memory, seg_end(segment::data))) {
+    if (driver::read_memory(handle, base, memory, (uint32_t)seg_end(segment::data))) {
         std::cout << "error reading memory\n";
         std::cin.get();
         return 1;

@@ -17,8 +17,12 @@
 
 void entry() {
 	if (!driver::is_driver_loaded()) {
-		MessageBoxA(nullptr, "Driver not loaded!", "Error!", 0);
-		exit(1);
+		if (MessageBoxA(nullptr, "Driver not loaded! Do you want to use User-Mode instead?", "Warning", MB_YESNO) == IDYES) {
+			driver::set_user_mode(true);
+		}
+		else {
+			exit(1);
+		}
 	}
 
 	overlay::enable();

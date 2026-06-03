@@ -21,16 +21,43 @@ int main()
         printf("[+] kernel mode selected\n");
     }
 
-    if (!driver::initialize())
-        std::cout << "driver/interface init failed\n";
+    if (!driver::initialize()) {
+        std::cout << "[!] driver/interface init failed, falling back to user mode...\n";
+        driver::set_user_mode(true);
+    }
 
-    DWORD pid;
-    GetWindowThreadProcessId(FindWindowA(nullptr, "Rainbow Six"), &pid);
+    DWORD pid = 0;
+    HWND window = FindWindowA(nullptr, "Rainbow Six");
+    if (window) {
+        GetWindowThreadProcessId(window, &pid);
+    } else {
+        // Fallback to process name search
+        HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if (snapshot != INVALID_HANDLE_VALUE) {
+            PROCESSENTRY32W processEntry;
+            processEntry.dwSize = sizeof(processEntry);
+            if (Process32FirstW(snapshot, &processEntry)) {
+                do {
+                    if (wcscmp(processEntry.szExeFile, L"RainbowSix.exe") == 0) {
+                        pid = processEntry.th32ProcessID;
+                        break;
+                    }
+                } while (Process32NextW(snapshot, &processEntry));
+            }
+            CloseHandle(snapshot);
+        }
+    }
+
+    if (pid == 0) {
+        std::cout << "[-] failed to find rainbow six process!" << std::endl;
+        std::cin.get();
+        return 1;
+    }
 
     handle = driver::open_process(pid);
 
     if (handle == 0) {
-        std::cout << "[-] failed to find rainbow six!" << std::endl;
+        std::cout << "[-] failed to open rainbow six process!" << std::endl;
 
         std::cin.get();
         return 1;

@@ -28,47 +28,57 @@ NTSTATUS IoControl(PDEVICE_OBJECT deviceObject, PIRP irp) {
         __try {
             switch (controlCode) {
             case IOCTL_MEMORY_READ: {
-                if (inputLength < sizeof(MEMORY_REQUEST)) {
+                if (inputLength < sizeof(MEMORY_REQUEST) || outputLength < sizeof(MEMORY_REQUEST)) {
                     status = STATUS_BUFFER_TOO_SMALL;
                     break;
                 }
                 ProbeForWrite(buffer, sizeof(MEMORY_REQUEST), 1);
                 PMEMORY_REQUEST request = (PMEMORY_REQUEST)buffer;
+                if (request->Buffer == NULL || request->Size == 0) {
+                    status = STATUS_INVALID_PARAMETER;
+                    break;
+                }
+                ProbeForWrite(request->Buffer, (SIZE_T)request->Size, 1);
                 request->Status = routines::ReadProcessMemoryKernel(request->ProcessId, request->Address, request->Buffer, request->Size);
-                status = request->Status;
+                status = STATUS_SUCCESS;
                 break;
             }
             case IOCTL_MEMORY_WRITE: {
-                if (inputLength < sizeof(MEMORY_REQUEST)) {
+                if (inputLength < sizeof(MEMORY_REQUEST) || outputLength < sizeof(MEMORY_REQUEST)) {
                     status = STATUS_BUFFER_TOO_SMALL;
                     break;
                 }
                 ProbeForWrite(buffer, sizeof(MEMORY_REQUEST), 1);
                 PMEMORY_REQUEST request = (PMEMORY_REQUEST)buffer;
+                if (request->Buffer == NULL || request->Size == 0) {
+                    status = STATUS_INVALID_PARAMETER;
+                    break;
+                }
+                ProbeForRead(request->Buffer, (SIZE_T)request->Size, 1);
                 request->Status = routines::WriteProcessMemoryKernel(request->ProcessId, request->Address, request->Buffer, request->Size);
-                status = request->Status;
+                status = STATUS_SUCCESS;
                 break;
             }
             case IOCTL_MODULE_BASE: {
-                if (inputLength < sizeof(MODULE_REQUEST)) {
+                if (inputLength < sizeof(MODULE_REQUEST) || outputLength < sizeof(MODULE_REQUEST)) {
                     status = STATUS_BUFFER_TOO_SMALL;
                     break;
                 }
                 ProbeForWrite(buffer, sizeof(MODULE_REQUEST), 1);
                 PMODULE_REQUEST request = (PMODULE_REQUEST)buffer;
                 request->Status = routines::GetModuleBaseAddress(request->ProcessId, request->ModuleName, &request->BaseAddress);
-                status = request->Status;
+                status = STATUS_SUCCESS;
                 break;
             }
             case IOCTL_PROCESS_ID: {
-                if (inputLength < sizeof(PID_REQUEST)) {
+                if (inputLength < sizeof(PID_REQUEST) || outputLength < sizeof(PID_REQUEST)) {
                     status = STATUS_BUFFER_TOO_SMALL;
                     break;
                 }
                 ProbeForWrite(buffer, sizeof(PID_REQUEST), 1);
                 PPID_REQUEST request = (PPID_REQUEST)buffer;
                 request->Status = routines::GetProcessIdByName(request->ProcessName, &request->ProcessId);
-                status = request->Status;
+                status = STATUS_SUCCESS;
                 break;
             }
             default:

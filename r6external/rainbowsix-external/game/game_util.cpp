@@ -41,7 +41,7 @@ entity game::get_local_entity() {
 	chain = globals::memory.read<uintptr_t>(chain + 0x0);
 
 	if (chain != 0)
-		return globals::memory.read<uintptr_t>(chain + 0x28);
+		return entity(globals::memory.read<uintptr_t>(chain + 0x28));
 	
 	/*uintptr_t chain = globals::memory.read<uintptr_t>(globals::game_profile + 0x78);
 	chain = globals::memory.read<uintptr_t>(chain + 0x0);
@@ -49,7 +49,7 @@ entity game::get_local_entity() {
 	if (chain != 0)
 		return globals::memory.read<uintptr_t>(chain + 0x28);*/
 
-	return 0;
+	return entity(0);
 }
 
 uint64_t game::get_profile() {
@@ -81,8 +81,8 @@ bool game::update_addresses() {
 vec3_t game::get_angle_to(vec3_t enemy_position, vec3_t local_position) {
 	vec3_t dir = enemy_position - local_position;
 
-	float x = (float)(asin(dir.z / dir.length()) * (180 / math::pi));
-	float z = atan(dir.y / dir.x) * 57.2958f;
+	float x = (float)(std::asinf(dir.z / dir.length()) * (180 / (float)math::pi));
+	float z = std::atan2f(dir.y, dir.x) * 57.2958f;
 
 	if (dir.x >= 0.f) z += 180.f;
 	if (x > 179.99f) x -= 360.f;
@@ -514,16 +514,16 @@ void entity::set_gun_angles(vec4_t angles) {
 }
 
 vec3_t calculate_euler(vec4_t quaternion) { // ignore this shit code :)
-	return vec3_t(std::atan2(2.f * (quaternion.w * quaternion.z + quaternion.x * quaternion.y), (1.f - 2.f * (quaternion.y * quaternion.y + quaternion.z * quaternion.z))) * 57.2957795131f,
-		std::atan2(2.f * (quaternion.w * quaternion.x + quaternion.y * quaternion.z), (1.f - 2.f * (quaternion.x * quaternion.x + quaternion.y * quaternion.y))) * 57.2957795131f,
+	return vec3_t(std::atan2f(2.f * (quaternion.w * quaternion.z + quaternion.x * quaternion.y), (1.f - 2.f * (quaternion.y * quaternion.y + quaternion.z * quaternion.z))) * 57.2957795131f,
+		std::atan2f(2.f * (quaternion.w * quaternion.x + quaternion.y * quaternion.z), (1.f - 2.f * (quaternion.x * quaternion.x + quaternion.y * quaternion.y))) * 57.2957795131f,
 		0.f);
 }
 
 vec3_t calculate_angle(vec3_t translation, vec3_t position) { // credits to paracord for being big contributor
 	auto delta = translation - position;
 
-	auto y = -std::asin(delta.z / translation.dist_to(position)) * 57.2957795131f;
-	auto x = std::atan2(delta.y, delta.x) * 57.2957795131f;
+	auto y = -std::asinf(delta.z / translation.dist_to(position)) * 57.2957795131f;
+	auto x = std::atan2f(delta.y, delta.x) * 57.2957795131f;
 
 	return vec3_t(x + 90.f, y, 0.f);
 }

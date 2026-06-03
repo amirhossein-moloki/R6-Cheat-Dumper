@@ -2,6 +2,7 @@
 #define _GAME_GAME_UTIL_HPP_
 
 #include <string>
+#include <cstdint>
 
 #include "../util/math/vector.hpp"
 

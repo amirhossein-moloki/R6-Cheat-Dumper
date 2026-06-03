@@ -16,7 +16,7 @@ typedef struct _MEMORY_REQUEST {
     HANDLE   ProcessId;
     UINT64   Address;
     UINT64   Size;
-    void*    Buffer;
+    UINT8*   Buffer;
     NTSTATUS Status;
 } MEMORY_REQUEST;
 
@@ -47,11 +47,11 @@ public:
     void Shutdown();
 };
 
-// Legacy interface support if needed by other parts of the project
+// Legacy interface support
 namespace driver {
     extern KernelInterface* interface;
     bool initialize();
-    uint64_t open_process(uint32_t pid); // In new system, we use PID directly
+    uint64_t open_process(uint32_t pid);
     bool read_memory(uint64_t handle, uint64_t address, void* buffer, uint32_t size);
     bool write_memory(uint64_t handle, uint64_t address, const void* buffer, uint32_t size);
     uint64_t get_module_base(uint64_t handle, const wchar_t* dllname);

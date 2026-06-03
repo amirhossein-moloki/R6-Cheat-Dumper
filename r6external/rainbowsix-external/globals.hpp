@@ -18,7 +18,6 @@ namespace globals {
 	extern entity targeted_entity;
 
 	extern uintptr_t game_manager;
-	extern uintptr_t game_manager;
 	extern uintptr_t game_profile;
 	extern uintptr_t network_manager;
 	extern uintptr_t input_manager;

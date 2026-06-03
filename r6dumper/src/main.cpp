@@ -12,8 +12,11 @@ int main()
     if (!driver::initialize())
         std::cout << "driver init failed\n";
 
-    DWORD pid;
-    GetWindowThreadProcessId(FindWindowA(nullptr, "Rainbow Six"), &pid);
+    DWORD pid = 0;
+    HWND hwnd = FindWindowA(nullptr, "Rainbow Six");
+    if (hwnd) {
+        GetWindowThreadProcessId(hwnd, &pid);
+    }
 
     handle = driver::open_process(pid);
 
@@ -33,9 +36,9 @@ int main()
         return 1;
     }
 
-    memory = new uint8_t[seg_end(segment::data)];
+    memory = new (std::nothrow) uint8_t[seg_end(segment::data)];
 
-    if (driver::read_memory(handle, base, memory, seg_end(segment::data))) {
+    if (!driver::read_memory(handle, base, memory, seg_end(segment::data))) {
         std::cout << "error reading memory\n";
         std::cin.get();
         return 1;

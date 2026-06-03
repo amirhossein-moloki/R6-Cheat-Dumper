@@ -7,7 +7,7 @@ namespace globals {
 	util::memory memory;
 
 	bool w2s_good = true; // fuck this shit
-	entity targeted_entity = 0;
+	entity targeted_entity = entity(0);
 
 	uintptr_t game_manager;
 	uintptr_t game_profile;

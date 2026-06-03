@@ -23,10 +23,6 @@ namespace overlay::input {
         _In_ WPARAM wParam,
         _In_ LPARAM lParam
     ) {
-        if (nCode >= 0) {
-            const auto info = reinterpret_cast<MSLLHOOKSTRUCT*>(wParam);
-        }
-
         return CallNextHookEx(_mouse_hook, nCode, wParam, lParam);
     }
 
@@ -42,10 +38,12 @@ namespace overlay::input {
 
             switch (wParam) {
             case WM_KEYDOWN:
+            case WM_SYSKEYDOWN:
                 _key_map[info->vkCode] = true;
                 break;
 
             case WM_KEYUP:
+            case WM_SYSKEYUP:
                 _key_map[info->vkCode] = false;
                 _key_read[info->vkCode] = false;
                 break;
@@ -59,35 +57,36 @@ namespace overlay::input {
     }
 
     void message_handler() {
-        while (_keyboard_hook != nullptr) {
-            MSG msg;
-
-            while (!GetMessage(&msg, nullptr, 0, 0)) {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
-            }
+        MSG msg;
+        while (GetMessage(&msg, nullptr, 0, 0)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
         }
     }
 
     void enable() {
         _message_thread = std::thread([] {
-            _keyboard_hook = SetWindowsHookExA(WH_KEYBOARD_LL, &LowLevelKeyboardProc, nullptr, 0);
+            _keyboard_hook = SetWindowsHookExA(WH_KEYBOARD_LL, &LowLevelKeyboardProc, GetModuleHandle(NULL), 0);
 
             if (_keyboard_hook == nullptr) {
-                MessageBoxA(nullptr, "error", "error", 0);
+                // MessageBoxA(nullptr, "error setting keyboard hook", "error", 0);
+                return;
             }
 
             message_handler();
         });
+        _message_thread.detach();
     }
 
     void disable() {
-        UnhookWindowsHookEx(_keyboard_hook);
-
-        _keyboard_hook = nullptr;
+        if (_keyboard_hook) {
+            UnhookWindowsHookEx(_keyboard_hook);
+            _keyboard_hook = nullptr;
+        }
     }
 
     bool key_down(uint32_t key) {
+        std::lock_guard<std::mutex> guard(_key_mutex);
         return _key_map[key];
     }
 

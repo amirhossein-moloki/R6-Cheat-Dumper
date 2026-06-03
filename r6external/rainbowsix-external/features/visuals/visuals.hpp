@@ -5,7 +5,7 @@ namespace visuals {
 	void player_fov(float fov);
 	void gunmodel_fov(float fov);
 	void glow(float red, float green, float blue, float alpha, float opacity, float distance);
-	void noflash(byte value);
+	void noflash(unsigned char value);
 	void spotted(bool enabled);
 	void gravity(bool enable);
 	void thirdperson(int value);

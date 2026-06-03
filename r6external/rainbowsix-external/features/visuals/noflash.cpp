@@ -1,7 +1,8 @@
+#include <cstdint>
 #include "visuals.hpp"
 #include "../../globals.hpp"
 
-void visuals::noflash(byte value) {
+void visuals::noflash(unsigned char value) {
 	uintptr_t chain = globals::memory.read<uintptr_t>(globals::game_profile + 0x78);
 	chain = globals::memory.read<uintptr_t>(chain + 0x0);
 	chain = globals::memory.read<uintptr_t>(chain + 0x28);
@@ -10,5 +11,5 @@ void visuals::noflash(byte value) {
 	chain = globals::memory.read<uintptr_t>(chain + 0x28);
 	
 	if (chain != 0)
-		globals::memory.write<byte>(chain + 0x40, value);
+		globals::memory.write<unsigned char>(chain + 0x40, value);
 }

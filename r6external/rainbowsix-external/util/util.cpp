@@ -5,22 +5,23 @@
 
 uint32_t util::get_pid_from_window(const char* window_name) {
 	HWND windowHandle = FindWindowA(NULL, window_name);
-	DWORD* processID = new DWORD;
-	GetWindowThreadProcessId(windowHandle, processID);
-	return *processID;
+	DWORD processID = 0;
+	GetWindowThreadProcessId(windowHandle, &processID);
+	return (uint32_t)processID;
 }
 
 uint32_t util::get_pid_from_class(const char* window_class) {
 	HWND windowHandle = FindWindowA(window_class, NULL);
-	DWORD* processID = new DWORD;
-	GetWindowThreadProcessId(windowHandle, processID);
-	return *processID;
+	DWORD processID = 0;
+	GetWindowThreadProcessId(windowHandle, &processID);
+	return (uint32_t)processID;
 }
 
 uint32_t util::get_pid_from_file(const char target[]) {
 	HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	if (snap == INVALID_HANDLE_VALUE) {
 		std::cout << GetLastError() << std::endl;
+		return 0;
 	}
 	PROCESSENTRY32 pe32;
 	pe32.dwSize = sizeof(PROCESSENTRY32);

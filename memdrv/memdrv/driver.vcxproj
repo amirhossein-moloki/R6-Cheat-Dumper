@@ -34,24 +34,36 @@
     <ClCompile>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <SpectreMitigation>false</SpectreMitigation>
+      <ControlFlowGuard>false</ControlFlowGuard>
+      <WarningLevel>Level1</WarningLevel>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <PreprocessorDefinitions>_AMD64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(WindowsSdkDir)Include\$(TargetPlatformVersion)\km;$(WindowsSdkDir)Include\$(TargetPlatformVersion)\shared;$(WindowsSdkDir)Include\$(TargetPlatformVersion)\um;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EntryPointSymbol>DriverEntry</EntryPointSymbol>
       <AdditionalLibraryDirectories>$(WindowsSdkDir)Lib\$(TargetPlatformVersion)\km\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ControlFlowGuard>false</ControlFlowGuard>
+      <GenerateManifest>false</GenerateManifest>
+      <AdditionalDependencies>ntoskrnl.lib;hal.lib;wdmsec.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <SpectreMitigation>false</SpectreMitigation>
+      <ControlFlowGuard>false</ControlFlowGuard>
+      <WarningLevel>Level1</WarningLevel>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <PreprocessorDefinitions>_AMD64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(WindowsSdkDir)Include\$(TargetPlatformVersion)\km;$(WindowsSdkDir)Include\$(TargetPlatformVersion)\shared;$(WindowsSdkDir)Include\$(TargetPlatformVersion)\um;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EntryPointSymbol>DriverEntry</EntryPointSymbol>
       <AdditionalLibraryDirectories>$(WindowsSdkDir)Lib\$(TargetPlatformVersion)\km\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ControlFlowGuard>false</ControlFlowGuard>
+      <GenerateManifest>false</GenerateManifest>
+      <AdditionalDependencies>ntoskrnl.lib;hal.lib;wdmsec.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

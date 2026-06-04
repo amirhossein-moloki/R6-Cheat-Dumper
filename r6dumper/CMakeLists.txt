@@ -1,40 +1,54 @@
 cmake_minimum_required(VERSION 3.20)
 project(r6dumper VERSION 1.0 LANGUAGES CXX C)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# ============================================
+# 1. Environment Detection
+# ============================================
+set(KITS_ROOT "C:/Program Files (x86)/Windows Kits/10")
+set(SDK_VERSION "10.0.28000.0")
 
-# Detect Windows SDK Path via Registry
-execute_process(
-    COMMAND cmd /c "reg query \"HKLM\\SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v10.0\" /v \"InstallationFolder\""
-    OUTPUT_VARIABLE WINDOWS_SDK_REG
-    ERROR_QUIET
-)
-
-if(MSVC)
-    add_compile_options(/Qspectre-)
-endif()
-
+# ============================================
+# 2. Source Files
+# ============================================
 file(GLOB SOURCES
     "src/*.cpp"
     "src/*.hpp"
     "src/*.h"
 )
 
+# ============================================
+# 3. Target Definition
+# ============================================
 add_executable(${PROJECT_NAME} ${SOURCES})
 
+# ============================================
+# 4. Include Directories
+# ============================================
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
+    "${KITS_ROOT}/Include/${SDK_VERSION}/um"
+    "${KITS_ROOT}/Include/${SDK_VERSION}/shared"
 )
 
+# ============================================
+# 5. Compiler & Linker Options
+# ============================================
 if(MSVC)
-    target_compile_options(${PROJECT_NAME} PRIVATE /MP /volatile:iso)
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        /MP
+        /volatile:iso
+        /Qspectre-
+    )
+
     set_target_properties(${PROJECT_NAME} PROPERTIES
         LINK_FLAGS "/SUBSYSTEM:CONSOLE"
         VS_PLATFORM_TOOLSET "v145"
     )
 endif()
 
+# ============================================
+# 6. Post-Build Actions
+# ============================================
 # Copy offsets.db to the output directory
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different

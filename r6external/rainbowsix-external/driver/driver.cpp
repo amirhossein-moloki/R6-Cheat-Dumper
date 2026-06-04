@@ -77,36 +77,67 @@ namespace driver {
 			if (ntdll == nullptr)
 				ntdll = LoadLibraryA("ntdll.dll");
 
+			if (ntdll == nullptr) return -1;
+
 			oNtConvertBetweenAuxiliaryCounterAndPerformanceCounter = reinterpret_cast<
 				fnNtConvertBetweenAuxiliaryCounterAndPerformanceCounter>(GetProcAddress(
 					ntdll, "NtConvertBetweenAuxiliaryCounterAndPerformanceCounter"));
 		}
+
+		if (oNtConvertBetweenAuxiliaryCounterAndPerformanceCounter == nullptr) return -1;
 
 		std::int64_t status = 0;
 		oNtConvertBetweenAuxiliaryCounterAndPerformanceCounter(reinterpret_cast<void*>(1), &pdata, &status, nullptr);
 		return static_cast<NTSTATUS>(status);
 	}
 
+	bool initialize() {
+		if (g_user_mode) {
+			std::cout << "[*] User-mode already active." << std::endl;
+			return true;
+		}
+
+		if (is_driver_loaded()) {
+			std::cout << "[+] Driver connection established." << std::endl;
+			return true;
+		}
+
+		std::cout << "[!] Driver not found. Falling back to User-mode (ReadProcessMemory)." << std::endl;
+		g_user_mode = true;
+		return true;
+	}
+
 	bool is_driver_loaded() {
 		if (g_user_mode) return true;
 
 		bool status = false;
+		NTSTATUS result = execute_syscall(DriverCall::IsLoaded, &status);
 
-		(void)execute_syscall(DriverCall::IsLoaded, &status);
-
-		return status;
+		return (result == 0 && status);
 	}
 
 	uint64_t open_process(uint32_t pid) {
 		if (g_user_mode) {
-			return reinterpret_cast<uint64_t>(OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid));
+			std::cout << "[*] Opening process " << pid << " with limited rights..." << std::endl;
+			HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+			if (hProcess == NULL) {
+				DWORD error = GetLastError();
+				std::cout << "[-] OpenProcess failed. Error code: " << error << " (0x" << std::hex << error << std::dec << ")" << std::endl;
+				return 0;
+			}
+			std::cout << "[+] Handle obtained: 0x" << std::hex << reinterpret_cast<uint64_t>(hProcess) << std::dec << std::endl;
+			return reinterpret_cast<uint64_t>(hProcess);
 		}
 
 		open_handle_data data = {};
 
 		data.pid = pid;
 
-		(void)execute_syscall(DriverCall::OpenProcess, &data);
+		NTSTATUS status = execute_syscall(DriverCall::OpenProcess, &data);
+		if (status != 0 || data.handle == 0) {
+			std::cout << "[-] Driver failed to open process. Status: 0x" << std::hex << status << std::dec << std::endl;
+			return 0;
+		}
 
 		return data.handle;
 	}
@@ -114,7 +145,12 @@ namespace driver {
 	bool read_memory(uint64_t handle, uintptr_t address, uint8_t* buffer, uint32_t size) {
 		if (g_user_mode) {
 			SIZE_T bytes_read;
-			return ReadProcessMemory(reinterpret_cast<HANDLE>(handle), reinterpret_cast<LPCVOID>(address), buffer, size, &bytes_read);
+			if (ReadProcessMemory(reinterpret_cast<HANDLE>(handle), reinterpret_cast<LPCVOID>(address), buffer, size, &bytes_read)) {
+				return true;
+			}
+			// Silent fail or diagnostic? Requested diagnostic prints for failures.
+			// However, frequent reads might flood console. Let's stick to initial requirements.
+			return false;
 		}
 
 		read_write_data data = {};
@@ -130,7 +166,10 @@ namespace driver {
 	bool write_memory(uint64_t handle, uintptr_t address, const uint8_t* buffer, uint32_t size) {
 		if (g_user_mode) {
 			SIZE_T bytes_written;
-			return WriteProcessMemory(reinterpret_cast<HANDLE>(handle), reinterpret_cast<LPVOID>(address), const_cast<uint8_t*>(buffer), size, &bytes_written);
+			if (WriteProcessMemory(reinterpret_cast<HANDLE>(handle), reinterpret_cast<LPVOID>(address), const_cast<uint8_t*>(buffer), size, &bytes_written)) {
+				return true;
+			}
+			return false;
 		}
 
 		read_write_data data = {};

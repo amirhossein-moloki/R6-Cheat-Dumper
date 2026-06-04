@@ -16,17 +16,17 @@
 #include "util/memory.hpp"
 
 void entry() {
-	if (!driver::is_driver_loaded()) {
-		if (MessageBoxA(nullptr, "Driver not loaded! Do you want to use User-Mode instead?", "Warning", MB_YESNO) == IDYES) {
-			driver::set_user_mode(true);
-		}
-		else {
-			exit(1);
-		}
+	std::cout << "[*] Initializing technical suite..." << std::endl;
+
+	if (!driver::initialize()) {
+		std::cout << "[-] Failed to initialize driver interface." << std::endl;
+		system("pause");
+		exit(1);
 	}
 
 	overlay::enable();
 
+	std::cout << "[*] Looking for RainbowSix.exe..." << std::endl;
 	while (!util::is_game_open("Rainbow Six", "R6Game", "RainbowSix.exe")) {
 		if (overlay::input::key_pressed(VK_DELETE))
 			exit(0);
@@ -37,21 +37,31 @@ void entry() {
 	globals::game_pid = util::get_pid_from_file("RainbowSix.exe");
 
 	if (globals::game_pid == 0) {
-		MessageBoxA(nullptr, "Invalid process id", "Error!", 0);
+		std::cout << "[-] Invalid process id." << std::endl;
+		system("pause");
 		exit(1);
 	}
 	
+	std::cout << "[+] Found PID: " << globals::game_pid << std::endl;
+
 	if (!globals::memory.attach(globals::game_pid)) {
-		MessageBoxA(nullptr, "Invalid handle", "Error!", 0);
+		std::cout << "[-] Failed to attach to process memory." << std::endl;
+		system("pause");
 		exit(1);
 	}
 
 	globals::module_base = driver::get_module_base(globals::game_pid, L"RainbowSix.exe");
+	if (globals::module_base == 0) {
+		globals::module_base = driver::get_module_base(globals::game_pid, L"RainbowSix_Vulkan.exe");
+	}
 
 	if (globals::module_base == 0) {
-		MessageBoxA(nullptr, "Failed to get module base address", "Error!", 0);
+		std::cout << "[-] Failed to get module base address." << std::endl;
+		system("pause");
 		exit(1);
 	}
+
+	std::cout << "[+] Module base: 0x" << std::hex << globals::module_base << std::dec << std::endl;
 
 	Beep(500, 500);
 

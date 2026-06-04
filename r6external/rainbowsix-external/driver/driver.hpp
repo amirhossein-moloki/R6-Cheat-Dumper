@@ -8,6 +8,7 @@ namespace driver {
 
 	extern void set_user_mode(bool user_mode);
 
+	extern bool initialize();
 	extern bool is_driver_loaded();
 	
 	extern uint64_t open_process(uint32_t pid);

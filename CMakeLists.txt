@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
-project(technical-suite VERSION 1.0)
+project(technical-suite VERSION 1.0 LANGUAGES CXX C)
 
 # ============================================
-# Root CMake configuration for the Technical Suite
+# Global Settings
 # ============================================
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Component 1: Kernel Driver
 add_subdirectory(memdrv)

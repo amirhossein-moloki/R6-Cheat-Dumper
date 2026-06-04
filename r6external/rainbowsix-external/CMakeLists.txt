@@ -2,26 +2,10 @@ cmake_minimum_required(VERSION 3.20)
 project(rainbowsix-external VERSION 1.0 LANGUAGES CXX C)
 
 # ============================================
-# 1. Compiler and Platform Settings
+# 1. Environment Detection
 # ============================================
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# Detect Windows SDK Path via Registry
-execute_process(
-    COMMAND cmd /c "reg query \"HKLM\\SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v10.0\" /v \"InstallationFolder\""
-    OUTPUT_VARIABLE WINDOWS_SDK_REG
-    ERROR_QUIET
-)
-if(WINDOWS_SDK_REG MATCHES "InstallationFolder[ ]+REG_SZ[ ]+([^\\r\\n]+)")
-    set(WINDOWS_SDK_PATH "${CMAKE_MATCH_1}")
-    message(STATUS "Found Windows SDK at: ${WINDOWS_SDK_PATH}")
-endif()
-
-# Disable Spectre Mitigation
-if(MSVC)
-    add_compile_options(/Qspectre-)
-endif()
+set(KITS_ROOT "C:/Program Files (x86)/Windows Kits/10")
+set(SDK_VERSION "10.0.28000.0")
 
 # ============================================
 # 2. Source Files
@@ -70,6 +54,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/features
     ${CMAKE_CURRENT_SOURCE_DIR}/overlay/imgui
     ${CMAKE_CURRENT_SOURCE_DIR}/overlay/minhook
+    "${KITS_ROOT}/Include/${SDK_VERSION}/um"
+    "${KITS_ROOT}/Include/${SDK_VERSION}/shared"
 )
 
 # ============================================
@@ -80,6 +66,8 @@ target_link_libraries(${PROJECT_NAME}
     dxgi
     d3dcompiler
     winmm
+    user32
+    gdi32
 )
 
 # ============================================
@@ -90,10 +78,11 @@ if(MSVC)
         /MP
         /std:c++17
         /volatile:iso
+        /Qspectre-
     )
 
     set_target_properties(${PROJECT_NAME} PROPERTIES
-        LINK_FLAGS "/SUBSYSTEM:CONSOLE"
+        LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup"
         VS_PLATFORM_TOOLSET "v145"
     )
 endif()

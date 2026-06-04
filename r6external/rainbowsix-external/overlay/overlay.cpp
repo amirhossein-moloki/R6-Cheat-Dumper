@@ -31,6 +31,12 @@ namespace overlay {
 
 	bool find_target_present() {
 		auto address = find_pattern_module("dwmcore.dll", "E8 ? ? ? ? 8B D8 85 C0 78 27 44 38 3D ? ? ? ?");
+		if (address == 0) {
+			// Try fallback pattern for some Windows 11 versions
+			address = find_pattern_module("dwmcore.dll", "E8 ? ? ? ? 44 38 3D ? ? ? ? 0F 84");
+		}
+
+		if (address == 0) return false;
 
 		//address = address + 1;
 		//address = address + *reinterpret_cast<uint32_t*>(address) + 5;
@@ -40,13 +46,24 @@ namespace overlay {
 		address -= 0x100000000;
 
 		_CHwFullScreenRenderTarget_Present = address;
-		_CHwFullScreenRenderTarget_SwapChainBase_Offset = *reinterpret_cast<uint8_t*>(address + 223 + 3);
+
+		// Offset for SwapChainBase can vary. Let's add more logging if possible or use a more robust way.
+		// In some versions, it's at address + 223 + 3.
+		// We should be careful here as it might crash if the offset is wrong.
+		__try {
+			_CHwFullScreenRenderTarget_SwapChainBase_Offset = *reinterpret_cast<uint8_t*>(address + 223 + 3);
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER) {
+			std::cout << "[-] Exception while reading SwapChainBase offset!" << std::endl;
+			return false;
+		}
 
 		return _CHwFullScreenRenderTarget_Present != 0;
 	}
 
 	bool find_swap_chain_offset() {
 		const auto address = find_pattern_module("dwmcore.dll", "40 53 48 83 EC 30 48 8B 89 ? ? ? ? 48 8B 01");
+		if (address == 0) return false;
 
 		_CDWMSwapChain_DxgiSwapChain_Offset = *reinterpret_cast<uint32_t*>(address + 9);
 
@@ -129,8 +146,20 @@ namespace overlay {
 	}
 
 	void enable() {
-		if (!find_target_present() || !find_swap_chain_offset())
+		std::cout << "[*] Enabling overlay..." << std::endl;
+		if (!find_target_present()) {
+			std::cout << "[-] Failed to find CHwFullScreenRenderTarget::Present pattern in dwmcore.dll" << std::endl;
+			system("pause");
 			exit(1);
+		}
+		std::cout << "[+] Found Present address: 0x" << std::hex << _CHwFullScreenRenderTarget_Present << std::dec << std::endl;
+
+		if (!find_swap_chain_offset()) {
+			std::cout << "[-] Failed to find DXGI swap chain offset in dwmcore.dll" << std::endl;
+			system("pause");
+			exit(1);
+		}
+		std::cout << "[+] Found SwapChain offset: 0x" << std::hex << _CDWMSwapChain_DxgiSwapChain_Offset << std::dec << std::endl;
 
 		input::enable();
 

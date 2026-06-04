@@ -19,9 +19,16 @@ void RunCheat() {
 	std::cout << "[*] Initializing technical suite..." << std::endl;
 
 	if (!driver::initialize()) {
-		std::cout << "[-] Failed to initialize driver interface." << std::endl;
-		system("pause");
-		exit(1);
+		std::cout << "[-] Failed to initialize driver interface. Falling back to User-mode..." << std::endl;
+		driver::set_user_mode(true);
+		if (!driver::initialize()) {
+			std::cout << "[-] Failed to initialize User-mode interface." << std::endl;
+			system("pause");
+			exit(1);
+		}
+		std::cout << "[+] User-mode interface initialized." << std::endl;
+	} else {
+		std::cout << "[+] Driver interface initialized." << std::endl;
 	}
 
 	overlay::enable();
@@ -65,9 +72,14 @@ void RunCheat() {
 
 	Beep(500, 500);
 
-	while (!game::update_addresses())
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	std::cout << "[*] Updating game addresses..." << std::endl;
+	while (!game::update_addresses()) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+		std::cout << "[*] Still waiting for game addresses to update..." << std::endl;
+	}
+	std::cout << "[+] Game addresses updated." << std::endl;
 	
+	std::cout << "[*] Cheat loop started. Press DELETE to exit." << std::endl;
 	while (overlay::input::key_pressed(VK_DELETE) == 0) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		

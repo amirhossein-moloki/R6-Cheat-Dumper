@@ -82,7 +82,7 @@ if(MSVC)
     )
 
     set_target_properties(${PROJECT_NAME} PROPERTIES
-        LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup"
+        LINK_FLAGS "/SUBSYSTEM:CONSOLE"
         VS_PLATFORM_TOOLSET "v145"
     )
 endif()

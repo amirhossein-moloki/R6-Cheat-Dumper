@@ -48,36 +48,54 @@ extern "C" {
 
 namespace util {
     NTSTATUS GetProcessIdByName(PCWSTR processName, PHANDLE pid) {
-        // Simple implementation using PsGetNextProcess (if available) or ZwQuerySystemInformation
-        // For simplicity and compatibility, we'll use ZwQuerySystemInformation with SystemProcessInformation
+        if (!processName || !pid) return STATUS_INVALID_PARAMETER;
 
         ULONG size = 0;
-        ZwQuerySystemInformation(SystemProcessInformation, nullptr, 0, &size);
+        NTSTATUS status = ZwQuerySystemInformation(SystemProcessInformation, nullptr, 0, &size);
 
-        if (size == 0) return STATUS_UNSUCCESSFUL;
+        // Security: Implement a retry loop to handle race conditions where process list grows
+        PVOID buffer = nullptr;
+        while (status == STATUS_INFO_LENGTH_MISMATCH || size > 0) {
+            if (buffer) {
+                ExFreePoolWithTag(buffer, 'PROC');
+            }
 
-        // ExAllocatePool2 is available in latest WDK
-        PVOID buffer = ExAllocatePool2(POOL_FLAG_PAGED, size, 'PROC');
-        if (!buffer) return STATUS_INSUFFICIENT_RESOURCES;
+            // Add a small buffer to avoid immediate mismatch if a few processes start
+            size += 4096;
 
-        NTSTATUS status = ZwQuerySystemInformation(SystemProcessInformation, buffer, size, &size);
-        if (NT_SUCCESS(status)) {
+            buffer = ExAllocatePool2(POOL_FLAG_PAGED, size, 'PROC');
+            if (!buffer) return STATUS_INSUFFICIENT_RESOURCES;
+
+            status = ZwQuerySystemInformation(SystemProcessInformation, buffer, size, &size);
+            if (NT_SUCCESS(status)) {
+                break;
+            }
+        }
+
+        if (NT_SUCCESS(status) && buffer) {
             auto currentEntry = (PSYSTEM_PROCESS_INFORMATION)buffer;
+            status = STATUS_NOT_FOUND; // Default if not found in loop
+
             while (true) {
-                if (currentEntry->ImageName.Buffer && _wcsicmp(currentEntry->ImageName.Buffer, processName) == 0) {
-                    *pid = currentEntry->UniqueProcessId;
-                    status = STATUS_SUCCESS;
-                    break;
+                // Security: ImageName.Buffer is a user-mode pointer in some contexts,
+                // but ZwQuerySystemInformation returns it as a kernel buffer here.
+                if (currentEntry->ImageName.Buffer && currentEntry->ImageName.Length > 0) {
+                    if (_wcsicmp(currentEntry->ImageName.Buffer, processName) == 0) {
+                        *pid = currentEntry->UniqueProcessId;
+                        status = STATUS_SUCCESS;
+                        break;
+                    }
                 }
                 if (currentEntry->NextEntryOffset == 0) {
-                    status = STATUS_NOT_FOUND;
                     break;
                 }
                 currentEntry = (PSYSTEM_PROCESS_INFORMATION)((PUCHAR)currentEntry + currentEntry->NextEntryOffset);
             }
         }
 
-        ExFreePoolWithTag(buffer, 'PROC');
+        if (buffer) {
+            ExFreePoolWithTag(buffer, 'PROC');
+        }
         return status;
     }
 }

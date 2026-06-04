@@ -23,13 +23,13 @@ typedef struct _MEMORY_REQUEST {
 
 typedef struct _MODULE_REQUEST {
     HANDLE   ProcessId;
-    WCHAR    ModuleName[256];
+    WCHAR    ModuleName[256]; // Security: Must be null-terminated by caller or driver
     UINT64   BaseAddress;
     NTSTATUS Status;
 } MODULE_REQUEST, *PMODULE_REQUEST;
 
 typedef struct _PID_REQUEST {
-    WCHAR    ProcessName[256];
+    WCHAR    ProcessName[256]; // Security: Must be null-terminated by caller or driver
     HANDLE   ProcessId;
     NTSTATUS Status;
 } PID_REQUEST, *PPID_REQUEST;

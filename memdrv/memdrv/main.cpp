@@ -1,3 +1,4 @@
+#include <wdmsec.h>
 #include "defs.hpp"
 #include "routines/routines.hpp"
 #include "util/clean.hpp"
@@ -18,6 +19,7 @@ NTSTATUS IoControl(PDEVICE_OBJECT deviceObject, PIRP irp) {
     PIO_STACK_LOCATION stack = IoGetCurrentIrpStackLocation(irp);
     ULONG controlCode = stack->Parameters.DeviceIoControl.IoControlCode;
     ULONG inputLength = stack->Parameters.DeviceIoControl.InputBufferLength;
+    ULONG outputLength = stack->Parameters.DeviceIoControl.OutputBufferLength;
 
     PVOID buffer = stack->Parameters.DeviceIoControl.Type3InputBuffer;
 
@@ -25,14 +27,24 @@ NTSTATUS IoControl(PDEVICE_OBJECT deviceObject, PIRP irp) {
         status = STATUS_INVALID_PARAMETER;
     } else {
         __try {
+            // Validate the request structure itself
+            ProbeForWrite(buffer, (controlCode == IOCTL_MEMORY_READ || controlCode == IOCTL_MEMORY_WRITE) ? sizeof(MEMORY_REQUEST) :
+                                  (controlCode == IOCTL_MODULE_BASE) ? sizeof(MODULE_REQUEST) :
+                                  (controlCode == IOCTL_PROCESS_ID) ? sizeof(PID_REQUEST) : 0, 1);
+
             switch (controlCode) {
             case IOCTL_MEMORY_READ: {
                 if (inputLength < sizeof(MEMORY_REQUEST)) {
                     status = STATUS_BUFFER_TOO_SMALL;
                     break;
                 }
-                ProbeForWrite(buffer, sizeof(MEMORY_REQUEST), 1);
                 PMEMORY_REQUEST request = (PMEMORY_REQUEST)buffer;
+
+                // Security: Probe the nested user-mode buffer
+                if (request->Buffer && request->Size > 0) {
+                    ProbeForWrite(request->Buffer, (SIZE_T)request->Size, 1);
+                }
+
                 request->Status = routines::ReadProcessMemoryKernel(request->ProcessId, request->Address, request->Buffer, request->Size);
                 status = request->Status;
                 break;
@@ -42,8 +54,13 @@ NTSTATUS IoControl(PDEVICE_OBJECT deviceObject, PIRP irp) {
                     status = STATUS_BUFFER_TOO_SMALL;
                     break;
                 }
-                ProbeForWrite(buffer, sizeof(MEMORY_REQUEST), 1);
                 PMEMORY_REQUEST request = (PMEMORY_REQUEST)buffer;
+
+                // Security: Probe the nested user-mode buffer
+                if (request->Buffer && request->Size > 0) {
+                    ProbeForRead(request->Buffer, (SIZE_T)request->Size, 1);
+                }
+
                 request->Status = routines::WriteProcessMemoryKernel(request->ProcessId, request->Address, request->Buffer, request->Size);
                 status = request->Status;
                 break;
@@ -53,8 +70,11 @@ NTSTATUS IoControl(PDEVICE_OBJECT deviceObject, PIRP irp) {
                     status = STATUS_BUFFER_TOO_SMALL;
                     break;
                 }
-                ProbeForWrite(buffer, sizeof(MODULE_REQUEST), 1);
                 PMODULE_REQUEST request = (PMODULE_REQUEST)buffer;
+
+                // Security: Ensure null termination for name string
+                request->ModuleName[255] = L'\0';
+
                 request->Status = routines::GetModuleBaseAddress(request->ProcessId, request->ModuleName, &request->BaseAddress);
                 status = request->Status;
                 break;
@@ -64,8 +84,11 @@ NTSTATUS IoControl(PDEVICE_OBJECT deviceObject, PIRP irp) {
                     status = STATUS_BUFFER_TOO_SMALL;
                     break;
                 }
-                ProbeForWrite(buffer, sizeof(PID_REQUEST), 1);
                 PPID_REQUEST request = (PPID_REQUEST)buffer;
+
+                // Security: Ensure null termination for name string
+                request->ProcessName[255] = L'\0';
+
                 request->Status = routines::GetProcessIdByName(request->ProcessName, &request->ProcessId);
                 status = request->Status;
                 break;
@@ -101,8 +124,13 @@ extern "C" NTSTATUS DriverEntry(PDRIVER_OBJECT driverObject, PUNICODE_STRING reg
     NTSTATUS status;
     PDEVICE_OBJECT deviceObject = nullptr;
 
-    status = IoCreateDevice(driverObject, 0, &DeviceName, FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN, FALSE, &deviceObject);
+    // Use a strict SDDL to prevent unauthorized access
+    // RW for System and Administrators only
+    UNICODE_STRING sddl = RTL_CONSTANT_STRING(L"D:P(A;;GA;;;SY)(A;;GA;;;BA)");
+
+    status = IoCreateDeviceSecure(driverObject, 0, &DeviceName, FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN, FALSE, &sddl, nullptr, &deviceObject);
     if (!NT_SUCCESS(status)) {
+        DbgPrint("[-] Failed to create secure device: 0x%X\n", status);
         return status;
     }
 

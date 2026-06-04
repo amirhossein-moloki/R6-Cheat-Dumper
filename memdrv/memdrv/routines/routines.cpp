@@ -13,6 +13,8 @@ namespace routines {
     }
 
     NTSTATUS ReadProcessMemoryKernel(HANDLE pid, UINT64 address, UINT8* buffer, UINT64 size) {
+        if (!pid || !address || !buffer || !size) return STATUS_INVALID_PARAMETER;
+
         PEPROCESS process = GetProcessByPid(pid);
         if (!process) return STATUS_NOT_FOUND;
 
@@ -29,7 +31,8 @@ namespace routines {
 
         NTSTATUS status = STATUS_NOT_IMPLEMENTED;
         if (MmCopyVirtualMemoryPtr) {
-             status = MmCopyVirtualMemoryPtr(process, (PVOID)address, PsGetCurrentProcess(), buffer, size, KernelMode, &bytesCopied);
+            // Note: buffer is already probed in IoControl
+            status = MmCopyVirtualMemoryPtr(process, (PVOID)address, PsGetCurrentProcess(), buffer, (SIZE_T)size, KernelMode, &bytesCopied);
         }
 
         ObDereferenceObject(process);
@@ -37,6 +40,8 @@ namespace routines {
     }
 
     NTSTATUS WriteProcessMemoryKernel(HANDLE pid, UINT64 address, UINT8* buffer, UINT64 size) {
+        if (!pid || !address || !buffer || !size) return STATUS_INVALID_PARAMETER;
+
         PEPROCESS process = GetProcessByPid(pid);
         if (!process) return STATUS_NOT_FOUND;
 
@@ -51,7 +56,8 @@ namespace routines {
 
         NTSTATUS status = STATUS_NOT_IMPLEMENTED;
         if (MmCopyVirtualMemoryPtr) {
-            status = MmCopyVirtualMemoryPtr(PsGetCurrentProcess(), buffer, process, (PVOID)address, size, KernelMode, &bytesCopied);
+            // Note: buffer is already probed in IoControl
+            status = MmCopyVirtualMemoryPtr(PsGetCurrentProcess(), buffer, process, (PVOID)address, (SIZE_T)size, KernelMode, &bytesCopied);
         }
 
         ObDereferenceObject(process);

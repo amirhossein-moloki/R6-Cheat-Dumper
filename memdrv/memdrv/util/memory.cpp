@@ -68,13 +68,10 @@ extern "C" {
 
 namespace util {
     NTSTATUS GetProcessModuleBase(PEPROCESS process, PCWSTR moduleName, PUINT64 baseAddress) {
-        if (!process) return STATUS_INVALID_PARAMETER;
+        if (!process || !baseAddress) return STATUS_INVALID_PARAMETER;
 
         // Use PsGetProcessSectionBaseAddress for the main module
         if (moduleName == nullptr || moduleName[0] == L'\0') {
-             // We can now use the declared function directly if available at link time,
-             // but keeping dynamic resolution as a fallback or for safety if preferred.
-             // Actually, since it was in defs.hpp before, it's likely linked.
              *baseAddress = (UINT64)PsGetProcessSectionBaseAddress(process);
              return *baseAddress ? STATUS_SUCCESS : STATUS_NOT_FOUND;
         }
@@ -88,18 +85,25 @@ namespace util {
         PPEB peb = PsGetProcessPeb(process);
         NTSTATUS status = STATUS_NOT_FOUND;
 
-        if (peb && peb->Ldr) {
-            for (PLIST_ENTRY entry = peb->Ldr->InLoadOrderModuleList.Flink;
-                 entry != &peb->Ldr->InLoadOrderModuleList;
-                 entry = entry->Flink) {
+        // Security: PEB and Ldr are user-mode structures. Must use SEH.
+        __try {
+            if (peb && peb->Ldr) {
+                for (PLIST_ENTRY entry = peb->Ldr->InLoadOrderModuleList.Flink;
+                     entry != &peb->Ldr->InLoadOrderModuleList;
+                     entry = entry->Flink) {
 
-                PLDR_DATA_TABLE_ENTRY module = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
-                if (module->BaseDllName.Buffer && _wcsicmp(module->BaseDllName.Buffer, moduleName) == 0) {
-                    *baseAddress = (UINT64)module->DllBase;
-                    status = STATUS_SUCCESS;
-                    break;
+                    PLDR_DATA_TABLE_ENTRY module = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
+                    if (module->BaseDllName.Buffer && _wcsicmp(module->BaseDllName.Buffer, moduleName) == 0) {
+                        *baseAddress = (UINT64)module->DllBase;
+                        status = STATUS_SUCCESS;
+                        break;
+                    }
                 }
             }
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER) {
+            status = GetExceptionCode();
+            DbgPrint("[-] Exception while traversing PEB: 0x%X\n", status);
         }
 
         KeUnstackDetachProcess(&apcState);

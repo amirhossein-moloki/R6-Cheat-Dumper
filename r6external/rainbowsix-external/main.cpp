@@ -15,7 +15,7 @@
 #include "util/util.hpp"
 #include "util/memory.hpp"
 
-void entry() {
+void RunCheat() {
 	std::cout << "[*] Initializing technical suite..." << std::endl;
 
 	if (!driver::initialize()) {
@@ -90,13 +90,7 @@ void entry() {
 	exit(0);
 }
 
-BOOL WINAPI DllMain(HINSTANCE hmodule, DWORD dwreason, LPVOID lpreserved) {
-	DisableThreadLibraryCalls(hmodule);
-
-	if (dwreason == DLL_PROCESS_ATTACH) {
-		if (const auto thread = CreateThread(nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(entry), nullptr, 0, nullptr))
-			CloseHandle(thread);
-	}
-	
-	return TRUE;
+int main() {
+    RunCheat();
+    return 0;
 }

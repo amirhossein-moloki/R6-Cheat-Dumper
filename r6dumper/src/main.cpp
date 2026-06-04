@@ -59,34 +59,50 @@ int main()
     }
 
     if (pid == 0) {
-        std::cout << "[-] failed to find rainbow six process!" << std::endl;
-        std::cin.get();
+        std::cout << "[-] Failed to find Rainbow Six process! Listing active processes:" << std::endl;
+        HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if (hSnap != INVALID_HANDLE_VALUE) {
+            PROCESSENTRY32W pe;
+            pe.dwSize = sizeof(pe);
+            if (Process32FirstW(hSnap, &pe)) {
+                do {
+                    std::wcout << L"  - " << pe.szExeFile << L" (PID: " << pe.th32ProcessID << L")" << std::endl;
+                } while (Process32NextW(hSnap, &pe));
+            }
+            CloseHandle(hSnap);
+        }
+        system("pause");
         return 1;
     }
+
+    std::cout << "[+] Found PID: " << pid << std::endl;
 
     handle = driver::open_process(pid);
 
     if (handle == 0) {
-        std::cout << "[-] failed to open rainbow six process!" << std::endl;
-
-        std::cin.get();
+        std::cout << "[-] Failed to open Rainbow Six process!" << std::endl;
+        system("pause");
         return 1;
     }
 
     base = driver::get_module_base((uint64_t)pid, L"RainbowSix.exe");
+    if (base == 0) {
+        base = driver::get_module_base((uint64_t)pid, L"RainbowSix_Vulkan.exe");
+    }
 
     if (base == 0) {
-        std::cout << "[-] failed to find module base!" << std::endl;
-
-        std::cin.get();
+        std::cout << "[-] Failed to find module base!" << std::endl;
+        system("pause");
         return 1;
     }
+
+    std::cout << "[+] Module base: 0x" << std::hex << base << std::dec << std::endl;
 
     memory = new uint8_t[seg_end(segment::data)];
 
     if (!driver::read_memory(handle, base, memory, (uint32_t)seg_end(segment::data))) {
-        std::cout << "error reading memory\n";
-        std::cin.get();
+        std::cout << "[-] Error reading memory (Anti-cheat may be blocking ReadProcessMemory)." << std::endl;
+        system("pause");
         return 1;
     }
 

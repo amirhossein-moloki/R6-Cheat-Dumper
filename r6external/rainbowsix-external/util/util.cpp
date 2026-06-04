@@ -20,7 +20,8 @@ uint32_t util::get_pid_from_class(const char* window_class) {
 uint32_t util::get_pid_from_file(const char target[]) {
 	HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	if (snap == INVALID_HANDLE_VALUE) {
-		std::cout << GetLastError() << std::endl;
+		std::cout << "[!] Error creating snapshot: " << GetLastError() << std::endl;
+		return 0;
 	}
 	PROCESSENTRY32 pe32;
 	pe32.dwSize = sizeof(PROCESSENTRY32);
@@ -30,10 +31,21 @@ uint32_t util::get_pid_from_file(const char target[]) {
 		return 0;
 	}
 	do {
-		if (strcmp(pe32.szExeFile, target) == 0) {
+		if (strcmp(pe32.szExeFile, target) == 0 ||
+			(strcmp(target, "RainbowSix.exe") == 0 && strcmp(pe32.szExeFile, "RainbowSix_Vulkan.exe") == 0)) {
+			CloseHandle(snap);
 			return pe32.th32ProcessID;
 		}
 	} while (Process32Next(snap, &pe32));
+
+	// If not found, list processes as requested in fallback
+	std::cout << "[-] Process " << target << " not found. Listing active processes:" << std::endl;
+	if (Process32First(snap, &pe32)) {
+		do {
+			std::cout << "  - " << pe32.szExeFile << " (PID: " << pe32.th32ProcessID << ")" << std::endl;
+		} while (Process32Next(snap, &pe32));
+	}
+
 	CloseHandle(snap);
 	return 0;
 }

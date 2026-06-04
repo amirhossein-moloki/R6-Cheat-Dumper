@@ -2,7 +2,10 @@
 
 bool KernelInterface::Initialize() {
     m_hDevice = CreateFileW(L"\\\\.\\Global\\MemDrv", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
-    return m_hDevice != INVALID_HANDLE_VALUE;
+    if (m_hDevice == INVALID_HANDLE_VALUE) {
+        return false;
+    }
+    return true;
 }
 
 void KernelInterface::Shutdown() {
@@ -67,13 +70,32 @@ namespace driver {
     }
 
     bool initialize() {
-        if (g_user_mode) return true;
-        return g_interface->Initialize();
+        if (g_user_mode) {
+            std::cout << "[*] User-mode selected." << std::endl;
+            return true;
+        }
+
+        if (g_interface->Initialize()) {
+            std::cout << "[+] Driver connection established." << std::endl;
+            return true;
+        }
+
+        std::cout << "[!] Driver not found. Falling back to User-mode (ReadProcessMemory)." << std::endl;
+        g_user_mode = true;
+        return true;
     }
 
     uint64_t open_process(uint32_t pid) {
         if (g_user_mode) {
-            return (uint64_t)OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+            std::cout << "[*] Opening process " << pid << " with limited rights..." << std::endl;
+            HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+            if (hProcess == NULL) {
+                DWORD error = GetLastError();
+                std::cout << "[-] OpenProcess failed. Error code: " << error << " (0x" << std::hex << error << std::dec << ")" << std::endl;
+                return 0;
+            }
+            std::cout << "[+] Handle obtained: 0x" << std::hex << (uintptr_t)hProcess << std::dec << std::endl;
+            return (uint64_t)hProcess;
         }
         // In the kernel system, handle is just PID
         return (uint64_t)pid;
@@ -82,7 +104,10 @@ namespace driver {
     bool read_memory(uint64_t handle, uint64_t address, void* buffer, uint32_t size) {
         if (g_user_mode) {
             SIZE_T bytesRead;
-            return ReadProcessMemory((HANDLE)handle, (LPCVOID)address, buffer, size, &bytesRead);
+            if (ReadProcessMemory((HANDLE)handle, (LPCVOID)address, buffer, size, &bytesRead)) {
+                return true;
+            }
+            return false;
         }
         return g_interface->ReadMemory((HANDLE)handle, address, buffer, (UINT64)size);
     }

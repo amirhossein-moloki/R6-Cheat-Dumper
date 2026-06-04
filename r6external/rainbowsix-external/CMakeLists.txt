@@ -7,7 +7,18 @@ project(rainbowsix-external VERSION 1.0 LANGUAGES CXX C)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Disable Spectre Mitigation to avoid MSB8040
+# Detect Windows SDK Path via Registry
+execute_process(
+    COMMAND cmd /c "reg query \"HKLM\\SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v10.0\" /v \"InstallationFolder\""
+    OUTPUT_VARIABLE WINDOWS_SDK_REG
+    ERROR_QUIET
+)
+if(WINDOWS_SDK_REG MATCHES "InstallationFolder[ ]+REG_SZ[ ]+([^\\r\\n]+)")
+    set(WINDOWS_SDK_PATH "${CMAKE_MATCH_1}")
+    message(STATUS "Found Windows SDK at: ${WINDOWS_SDK_PATH}")
+endif()
+
+# Disable Spectre Mitigation
 if(MSVC)
     add_compile_options(/Qspectre-)
 endif()
@@ -56,6 +67,7 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 # ============================================
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/features
     ${CMAKE_CURRENT_SOURCE_DIR}/overlay/imgui
     ${CMAKE_CURRENT_SOURCE_DIR}/overlay/minhook
 )
@@ -76,10 +88,12 @@ target_link_libraries(${PROJECT_NAME}
 if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE
         /MP
+        /std:c++17
         /volatile:iso
     )
 
     set_target_properties(${PROJECT_NAME} PROPERTIES
         LINK_FLAGS "/SUBSYSTEM:CONSOLE"
+        VS_PLATFORM_TOOLSET "v145"
     )
 endif()

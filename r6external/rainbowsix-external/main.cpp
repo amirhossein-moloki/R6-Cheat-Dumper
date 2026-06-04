@@ -91,6 +91,6 @@ void RunCheat() {
 }
 
 int main() {
-	RunCheat();
-	return 0;
+    RunCheat();
+    return 0;
 }

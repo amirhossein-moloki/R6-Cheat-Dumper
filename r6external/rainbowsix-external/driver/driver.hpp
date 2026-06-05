@@ -5,6 +5,7 @@
 
 namespace driver {
 	extern bool g_user_mode;
+	extern bool g_has_write_access;
 
 	extern void set_user_mode(bool user_mode);
 

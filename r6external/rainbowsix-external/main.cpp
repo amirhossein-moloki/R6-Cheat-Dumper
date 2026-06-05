@@ -19,16 +19,16 @@ void RunCheat() {
 	std::cout << "[*] Initializing technical suite..." << std::endl;
 
 	if (!driver::initialize()) {
-		std::cout << "[-] Failed to initialize driver interface. Falling back to User-mode..." << std::endl;
-		driver::set_user_mode(true);
-		if (!driver::initialize()) {
-			std::cout << "[-] Failed to initialize User-mode interface." << std::endl;
-			system("pause");
-			exit(1);
-		}
-		std::cout << "[+] User-mode interface initialized." << std::endl;
-	} else {
-		std::cout << "[+] Driver interface initialized." << std::endl;
+		std::cout << "[-] Critical failure during driver interface initialization." << std::endl;
+		system("pause");
+		exit(1);
+	}
+
+	if (driver::g_user_mode) {
+		std::cout << "[*] User-mode interface initialized. Access level will be determined upon attachment." << std::endl;
+	}
+	else {
+		std::cout << "[+] Kernel-mode driver interface initialized (Full Access)." << std::endl;
 	}
 
 	overlay::enable();
@@ -47,6 +47,16 @@ void RunCheat() {
 		std::cout << "[-] Invalid process id." << std::endl;
 		system("pause");
 		exit(1);
+	}
+
+	if (driver::g_user_mode) {
+		if (driver::g_has_write_access) {
+			std::cout << "[+] Attached with FULL ACCESS (Read/Write)." << std::endl;
+		}
+		else {
+			std::cout << "[!] Attached with LIMITED ACCESS (Read-Only)." << std::endl;
+			std::cout << "[!] Write-based features (No Recoil, Glow, etc.) will be disabled." << std::endl;
+		}
 	}
 	
 	std::cout << "[+] Found PID: " << globals::game_pid << std::endl;

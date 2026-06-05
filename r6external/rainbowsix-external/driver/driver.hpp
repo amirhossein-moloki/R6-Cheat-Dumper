@@ -40,6 +40,12 @@ private:
     HANDLE m_hDevice;
 public:
     KernelInterface() : m_hDevice(INVALID_HANDLE_VALUE) {}
+    ~KernelInterface() { Shutdown(); }
+
+    // Disable copy
+    KernelInterface(const KernelInterface&) = delete;
+    KernelInterface& operator=(const KernelInterface&) = delete;
+
     bool Initialize();
     bool ReadMemory(HANDLE pid, UINT64 address, void* buffer, UINT64 size);
     bool WriteMemory(HANDLE pid, UINT64 address, const void* buffer, UINT64 size);

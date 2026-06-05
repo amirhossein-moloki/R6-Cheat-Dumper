@@ -2,10 +2,10 @@ cmake_minimum_required(VERSION 3.20)
 project(memdrv VERSION 1.0 LANGUAGES CXX C)
 
 # ============================================
-# 1. Environment Detection (WDK 10.0.22621.0)
+# 1. Environment Detection (WDK 10.0.26100.0)
 # ============================================
 set(KITS_ROOT "C:/Program Files (x86)/Windows Kits/10")
-set(SDK_VERSION "10.0.22621.0")
+set(SDK_VERSION "10.0.26100.0")
 
 message(STATUS "Configuring Kernel Driver with WDK ${SDK_VERSION}")
 

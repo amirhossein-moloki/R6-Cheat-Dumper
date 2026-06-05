@@ -1,5 +1,7 @@
 #include "util.hpp"
 #include "../core/logger.hpp"
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 #include <Tlhelp32.h>
 
 uint32_t util::get_pid_from_window(const char* window_name) {

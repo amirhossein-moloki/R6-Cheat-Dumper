@@ -1,7 +1,7 @@
 #ifndef _UTIl_UTIL_HPP_
-#define _UTIL_UTIL_HPP_
+#define _UTIl_UTIL_HPP_
 
-#include <iostream>
+#include <cstdint>
 
 namespace util {
 	uint32_t get_pid_from_window(const char* window_name);

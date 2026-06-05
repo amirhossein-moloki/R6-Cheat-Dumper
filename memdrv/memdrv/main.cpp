@@ -21,20 +21,15 @@ NTSTATUS IoControl(PDEVICE_OBJECT deviceObject, PIRP irp) {
     ULONG inputLength = stack->Parameters.DeviceIoControl.InputBufferLength;
     ULONG outputLength = stack->Parameters.DeviceIoControl.OutputBufferLength;
 
-    PVOID buffer = stack->Parameters.DeviceIoControl.Type3InputBuffer;
+    PVOID buffer = irp->AssociatedIrp.SystemBuffer;
 
     if (!buffer) {
         status = STATUS_INVALID_PARAMETER;
     } else {
         __try {
-            // Validate the request structure itself
-            ProbeForWrite(buffer, (controlCode == IOCTL_MEMORY_READ || controlCode == IOCTL_MEMORY_WRITE) ? sizeof(MEMORY_REQUEST) :
-                                  (controlCode == IOCTL_MODULE_BASE) ? sizeof(MODULE_REQUEST) :
-                                  (controlCode == IOCTL_PROCESS_ID) ? sizeof(PID_REQUEST) : 0, 1);
-
             switch (controlCode) {
             case IOCTL_MEMORY_READ: {
-                if (inputLength < sizeof(MEMORY_REQUEST)) {
+                if (inputLength < sizeof(MEMORY_REQUEST) || outputLength < sizeof(MEMORY_REQUEST)) {
                     status = STATUS_BUFFER_TOO_SMALL;
                     break;
                 }
@@ -50,7 +45,7 @@ NTSTATUS IoControl(PDEVICE_OBJECT deviceObject, PIRP irp) {
                 break;
             }
             case IOCTL_MEMORY_WRITE: {
-                if (inputLength < sizeof(MEMORY_REQUEST)) {
+                if (inputLength < sizeof(MEMORY_REQUEST) || outputLength < sizeof(MEMORY_REQUEST)) {
                     status = STATUS_BUFFER_TOO_SMALL;
                     break;
                 }
@@ -66,7 +61,7 @@ NTSTATUS IoControl(PDEVICE_OBJECT deviceObject, PIRP irp) {
                 break;
             }
             case IOCTL_MODULE_BASE: {
-                if (inputLength < sizeof(MODULE_REQUEST)) {
+                if (inputLength < sizeof(MODULE_REQUEST) || outputLength < sizeof(MODULE_REQUEST)) {
                     status = STATUS_BUFFER_TOO_SMALL;
                     break;
                 }
@@ -80,7 +75,7 @@ NTSTATUS IoControl(PDEVICE_OBJECT deviceObject, PIRP irp) {
                 break;
             }
             case IOCTL_PROCESS_ID: {
-                if (inputLength < sizeof(PID_REQUEST)) {
+                if (inputLength < sizeof(PID_REQUEST) || outputLength < sizeof(PID_REQUEST)) {
                     status = STATUS_BUFFER_TOO_SMALL;
                     break;
                 }
@@ -105,7 +100,7 @@ NTSTATUS IoControl(PDEVICE_OBJECT deviceObject, PIRP irp) {
     }
 
     irp->IoStatus.Status = status;
-    irp->IoStatus.Information = 0;
+    irp->IoStatus.Information = (status == STATUS_SUCCESS) ? outputLength : 0;
     IoCompleteRequest(irp, IO_NO_INCREMENT);
     return status;
 }

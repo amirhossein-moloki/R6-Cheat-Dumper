@@ -33,30 +33,25 @@ namespace finder {
 
 
 
-				for (int sig_position = 0; sig_position < 0x200; sig_position++) {
-					for (uint64_t size = 0x10; sig_position + size < 0x200; size++) {
-						uint8_t* data = new uint8_t[size];
-
-						memcpy(data, raw_data + sig_position, size);
-
-						auto matches = shared::sig_scan(data, size, segment::text);
+				// Improved Heuristic: Use a larger initial chunk and only expand if necessary.
+				// Also, check multiple positions more efficiently.
+				bool found = false;
+				for (uint64_t size = 0x20; size < 0x100 && !found; size += 0x10) {
+					for (int sig_position = 0; sig_position < 0x100; sig_position += 8) {
+						auto matches = shared::sig_scan(reinterpret_cast<uint8_t*>(raw_data + sig_position), size, segment::text);
 
 						if (matches.empty())
-							break;
+							continue;
 
 						if (matches.size() == 1) {
 							if (extra_offset != 0)
 								printf("%s = 0x%" PRIX64 " - decrypt = 0x%" PRIX64 " \n", offset_name.c_str(), shared::extract_offset(matches[0] + 0x100 - sig_position + extra_offset), shared::extract_offset(matches[0] + 0x100 - sig_position));
-
 							else
 								printf("%s = 0x%" PRIX64 "\n", offset_name.c_str(), matches[0] + 0x100 - sig_position);
 
-
-							sig_position = 1000;
+							found = true;
 							break;
 						}
-
-						delete data;
 					}
 				}
 			}

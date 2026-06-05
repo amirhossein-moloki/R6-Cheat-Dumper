@@ -30,74 +30,134 @@ struct string_reference {
 enum class segment : uint8_t {
 	text = 0,
 	rdata,
-	data
+	data,
+	all
 };
 
-static uint64_t seg_start_arr[] = { 0x1000, 0x5032000, 0x57c3150 };
-static uint64_t seg_end_arr[] = { 0x5032000, 0x5600000, 0x7ef2000 };
+static uint64_t seg_start_arr[3] = { 0 };
+static uint64_t seg_end_arr[3] = { 0 };
 
 static uint64_t seg_start(segment seg) {
+	if (seg == segment::all) return 0;
 	return seg_start_arr[static_cast<uint64_t>(seg)];
 }
 static uint64_t seg_end(segment seg) {
+	if (seg == segment::all) return seg_end_arr[2]; // assuming data is last
 	return seg_end_arr[static_cast<uint64_t>(seg)];
 }
 
 namespace shared {
-	// compares memory with skips
-	static bool cmp_sig(uint8_t sig[], uint64_t address, size_t len, const char* skips = "") {
-		if (skips == "") {
-			if (!memcmp(sig, memory + address, len))
-				return false;
+	static bool discover_segments(uint8_t* header_buffer) {
+		PIMAGE_DOS_HEADER dos_header = reinterpret_cast<PIMAGE_DOS_HEADER>(header_buffer);
+		if (dos_header->e_magic != IMAGE_DOS_SIGNATURE) return false;
+
+		PIMAGE_NT_HEADERS64 nt_headers = reinterpret_cast<PIMAGE_NT_HEADERS64>(header_buffer + dos_header->e_lfanew);
+		if (nt_headers->Signature != IMAGE_NT_SIGNATURE) return false;
+
+		PIMAGE_SECTION_HEADER sections = IMAGE_FIRST_SECTION(nt_headers);
+
+		bool found_text = false, found_rdata = false, found_data = false;
+
+		for (int i = 0; i < nt_headers->FileHeader.NumberOfSections; i++) {
+			IMAGE_SECTION_HEADER& section = sections[i];
+			std::string name(reinterpret_cast<char*>(section.Name), 8);
+
+			if (name.find(".text") != std::string::npos) {
+				seg_start_arr[static_cast<int>(segment::text)] = section.VirtualAddress;
+				seg_end_arr[static_cast<int>(segment::text)] = section.VirtualAddress + section.Misc.VirtualSize;
+				found_text = true;
+			}
+			else if (name.find(".rdata") != std::string::npos) {
+				seg_start_arr[static_cast<int>(segment::rdata)] = section.VirtualAddress;
+				seg_end_arr[static_cast<int>(segment::rdata)] = section.VirtualAddress + section.Misc.VirtualSize;
+				found_rdata = true;
+			}
+			else if (name.find(".data") != std::string::npos && name.find(".data_") == std::string::npos) {
+				// Only take the first .data section or the one exactly named .data
+				if (!found_data || strcmp(reinterpret_cast<char*>(section.Name), ".data") == 0) {
+					seg_start_arr[static_cast<int>(segment::data)] = section.VirtualAddress;
+					seg_end_arr[static_cast<int>(segment::data)] = section.VirtualAddress + section.Misc.VirtualSize;
+					found_data = true;
+				}
+			}
 		}
 
-		else {
-			for (size_t i = 0; i < len; i++) {
-				if (skips[i] == '0' && memory[address + i] != sig[i])
-					break;
+		return found_text && found_rdata && found_data;
+	}
 
-				if (i == len - 1)
-					return false;
-			}
+	// compares memory with skips
+	// Returns true if it matches
+	static bool cmp_sig(const uint8_t* sig, uint64_t address, size_t len, const char* skips = "") {
+		if (skips == nullptr || skips[0] == '\0') {
+			return memcmp(sig, memory + address, len) == 0;
+		}
+
+		for (size_t i = 0; i < len; i++) {
+			if (skips[i] == '0' && memory[address + i] != sig[i])
+				return false;
 		}
 
 		return true;
 	}
 
 	// searches for instances of a signature
-	static std::vector<uint64_t> sig_scan(uint8_t sig[], size_t len, segment seg = segment::text, const char* skips = "") {
+	static std::vector<uint64_t> sig_scan(const uint8_t* sig, size_t len, segment seg = segment::text, const char* skips = "") {
 		std::vector<uint64_t> ret;
-		std::mutex mtx;
+		if (len == 0) return ret;
 
-		auto search_loop = [sig, &ret, &mtx, len, skips](uint64_t start, uint64_t size) {
-			for (uint64_t i = start; i < start + size; i++) {
-				if (!cmp_sig(sig, i, len, skips)) {
-					mtx.lock();
-					ret.push_back(i);
-					mtx.unlock();
+		uint64_t start_addr = seg_start(seg);
+		uint64_t end_addr = seg_end(seg);
+		if (end_addr <= start_addr || end_addr < len) return ret;
+
+		std::mutex mtx;
+		uint64_t search_range = end_addr - start_addr - len + 1;
+
+		auto search_loop = [sig, &ret, &mtx, len, skips, start_addr](uint64_t offset, uint64_t size) {
+			std::vector<uint64_t> local_ret;
+			uint64_t end = offset + size;
+
+			// Optimization: If no skips, use a faster search for the first byte
+			if (skips == nullptr || skips[0] == '\0') {
+				uint8_t first = sig[0];
+				for (uint64_t i = offset; i < end; i++) {
+					if (memory[i] == first) {
+						if (len == 1 || memcmp(sig + 1, memory + i + 1, len - 1) == 0) {
+							local_ret.push_back(i);
+						}
+					}
 				}
+			}
+			else {
+				for (uint64_t i = offset; i < end; i++) {
+					if (cmp_sig(sig, i, len, skips)) {
+						local_ret.push_back(i);
+					}
+				}
+			}
+
+			if (!local_ret.empty()) {
+				std::lock_guard<std::mutex> lock(mtx);
+				ret.insert(ret.end(), local_ret.begin(), local_ret.end());
 			}
 		};
 
-		std::vector<std::thread*> threads;
-		threads.resize(THREAD_COUNT);
+		unsigned int num_threads = std::thread::hardware_concurrency();
+		if (num_threads == 0) num_threads = THREAD_COUNT;
 
-		uint64_t addr = seg_start(seg);
-		uint64_t size = (seg_end(seg) - addr) / threads.size();
+		std::vector<std::thread> threads;
+		uint64_t chunk_size = search_range / num_threads;
 
-		for (int i = 0; i < threads.size() - 1; i++) {
-			threads[i] = new std::thread(search_loop, addr, size);
-
-			addr += size;
+		for (unsigned int i = 0; i < num_threads; i++) {
+			uint64_t start = start_addr + i * chunk_size;
+			uint64_t size = (i == num_threads - 1) ? (search_range - i * chunk_size) : chunk_size;
+			threads.emplace_back(search_loop, start, size);
 		}
 
-		threads.back() = new std::thread(search_loop, addr, seg_end(seg) - seg_start(seg) - size * (threads.size() - 1));
-
-		for (int i = 0; i < threads.size(); i++) {
-			threads[i]->join();
-			delete threads[i];
+		for (auto& t : threads) {
+			t.join();
 		}
 
+		std::sort(ret.begin(), ret.end());
 		return ret;
 	}
 

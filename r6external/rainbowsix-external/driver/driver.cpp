@@ -5,6 +5,7 @@
 
 namespace driver {
 	bool g_user_mode = false;
+	bool g_has_write_access = false;
 
 	void set_user_mode(bool user_mode) {
 		g_user_mode = user_mode;
@@ -99,11 +100,13 @@ namespace driver {
 
 		if (is_driver_loaded()) {
 			std::cout << "[+] Driver connection established." << std::endl;
+			g_has_write_access = true;
 			return true;
 		}
 
 		std::cout << "[!] Driver not found. Falling back to User-mode (ReadProcessMemory)." << std::endl;
 		g_user_mode = true;
+		g_has_write_access = false;
 		return true;
 	}
 
@@ -118,12 +121,22 @@ namespace driver {
 
 	uint64_t open_process(uint32_t pid) {
 		if (g_user_mode) {
-			std::cout << "[*] Opening process " << pid << " with limited rights..." << std::endl;
-			HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
-			if (hProcess == NULL) {
-				DWORD error = GetLastError();
-				std::cout << "[-] OpenProcess failed. Error code: " << error << " (0x" << std::hex << error << std::dec << ")" << std::endl;
-				return 0;
+			std::cout << "[*] Attempting to open process " << pid << " with full access..." << std::endl;
+			HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION, FALSE, pid);
+			if (hProcess != NULL) {
+				std::cout << "[+] Full access handle obtained." << std::endl;
+				g_has_write_access = true;
+			}
+			else {
+				std::cout << "[!] Full access failed. Attempting read-only access..." << std::endl;
+				hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+				if (hProcess == NULL) {
+					DWORD error = GetLastError();
+					std::cout << "[-] OpenProcess failed. Error code: " << error << " (0x" << std::hex << error << std::dec << ")" << std::endl;
+					return 0;
+				}
+				std::cout << "[+] Read-only handle obtained." << std::endl;
+				g_has_write_access = false;
 			}
 			std::cout << "[+] Handle obtained: 0x" << std::hex << reinterpret_cast<uint64_t>(hProcess) << std::dec << std::endl;
 			return reinterpret_cast<uint64_t>(hProcess);

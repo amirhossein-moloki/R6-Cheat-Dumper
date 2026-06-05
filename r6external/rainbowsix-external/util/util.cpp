@@ -1,6 +1,5 @@
 #include "util.hpp"
-#include <windows.h>
-#include <iostream>
+#include "../core/logger.hpp"
 #include <Tlhelp32.h>
 
 uint32_t util::get_pid_from_window(const char* window_name) {
@@ -21,7 +20,7 @@ uint32_t util::get_pid_from_file(const char target[]) {
 	uint32_t pid = 0;
 	HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	if (snap == INVALID_HANDLE_VALUE) {
-		std::cout << "[!] Error creating snapshot: " << GetLastError() << std::endl;
+			LOG_ERROR("Error creating snapshot: {}", GetLastError());
 		return 0;
 	}
 	PROCESSENTRY32 pe32;
@@ -45,10 +44,10 @@ uint32_t util::get_pid_from_file(const char target[]) {
 	}
 
 	// If not found, list processes as requested in fallback
-	std::cout << "[-] Process " << target << " not found. Listing active processes:" << std::endl;
+	LOG_WARN("Process {} not found. Listing active processes:", target);
 	if (Process32First(snap, &pe32)) {
 		do {
-			std::cout << "  - " << pe32.szExeFile << " (PID: " << pe32.th32ProcessID << ")" << std::endl;
+			LOG_INFO("  - {} (PID: {})", pe32.szExeFile, pe32.th32ProcessID);
 		} while (Process32Next(snap, &pe32));
 	}
 

@@ -1,0 +1,24 @@
+{
+    "aimbot": {
+        "enabled": true,
+        "silent": false,
+        "fov": 100.0,
+        "smooth_factor": 40.0
+    },
+    "misc": {
+        "no_animations": true,
+        "freeze_lobby": false,
+        "speed_multiplier": 1.18,
+        "gunmodel_fov": 0.8726646304,
+        "player_fov": 1.570796371,
+        "noflash_enabled": true
+    },
+    "glow": {
+        "red": 0.0,
+        "green": 0.25,
+        "blue": 1.0,
+        "alpha": 1.0,
+        "distance": 1.0,
+        "opacity": -1.0
+    }
+}

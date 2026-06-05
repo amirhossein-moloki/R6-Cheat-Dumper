@@ -38,7 +38,7 @@ namespace finder {
 				bool found = false;
 				for (uint64_t size = 0x20; size < 0x100 && !found; size += 0x10) {
 					for (int sig_position = 0; sig_position < 0x100; sig_position += 8) {
-						auto matches = shared::sig_scan(reinterpret_cast<uint8_t*>(raw_data + sig_position), size, segment::text);
+						auto matches = shared::sig_scan(reinterpret_cast<uint8_t*>(raw_data + sig_position), size, Segment::Text);
 
 						if (matches.empty())
 							continue;
@@ -73,7 +73,7 @@ namespace finder {
 					printf("search string %s, offset %lld\n", str_to_find.c_str(), offset);
 
 					char* cstr = const_cast<char*>(str_to_find.c_str());
-					auto vec = shared::sig_scan(reinterpret_cast<uint8_t*>(cstr), str_to_find.length() + 1, segment::rdata);
+					auto vec = shared::sig_scan(reinterpret_cast<uint8_t*>(cstr), str_to_find.length() + 1, Segment::Rdata);
 					if (vec.empty()) {
 						printf("error finding offset\n\n");
 						continue;

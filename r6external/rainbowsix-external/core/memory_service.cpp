@@ -1,6 +1,6 @@
 #include "memory_service.hpp"
 #include "../driver/driver.hpp"
-#include <iostream>
+#include "logger.hpp"
 #include <cstring>
 
 namespace core {
@@ -12,7 +12,7 @@ namespace core {
 
     bool MemoryService::initialize() {
         if (!driver::initialize()) {
-            std::cerr << "[-] Failed to initialize driver interface." << std::endl;
+            LOG_ERROR("Failed to initialize driver interface.");
             return false;
         }
         return true;

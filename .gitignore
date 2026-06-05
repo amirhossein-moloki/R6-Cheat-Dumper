@@ -1,0 +1,7 @@
+build/
+bin/
+*.user
+*.suo
+*.pdb
+*.log
+.vs/

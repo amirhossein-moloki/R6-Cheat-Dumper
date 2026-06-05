@@ -1,23 +1,24 @@
 #ifndef _GLOBALS_HPP_
 #define _GLOBALS_HPP_
 
-#include <iostream>
-#include <memory>
-
-#include "game/game_util.h"
+#include <cstdint>
 #include "util/math/vector.hpp"
+#include "game/game_util.h"
+
+// LEGACY GLOBALS - DEPRECATED
+// Use core::CheatContext instead.
+// These are kept temporarily for backward compatibility during migration.
+
 #include "util/memory.hpp"
 
 namespace globals {
 	extern util::memory memory;
-	
 	extern uint32_t game_pid;
 	extern uintptr_t module_base;
 
 	extern bool w2s_good;
-	extern entity targeted_entity;
+    extern entity targeted_entity;
 
-	extern uintptr_t game_manager;
 	extern uintptr_t game_manager;
 	extern uintptr_t game_profile;
 	extern uintptr_t network_manager;
@@ -38,7 +39,7 @@ namespace globals {
 	extern int window_horizontal_size;
 	extern int window_vertical_size;
 
-	extern vec3_t camera_view_right;
+    extern vec3_t camera_view_right;
 	extern vec3_t camera_view_up;
 	extern vec3_t camera_view_forward;
 	extern vec3_t camera_view_translation;

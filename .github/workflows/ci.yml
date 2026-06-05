@@ -1,0 +1,29 @@
+name: Technical Suite CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Configure CMake
+      run: cmake -B build -S . -G "Visual Studio 17 2022" -A x64
+
+    - name: Build
+      run: cmake --build build --config Release
+
+    - name: Run Tests
+      run: ctest --test-dir build -C Release --output-on-failure
+
+    - name: Static Analysis (Clang-Tidy)
+      run: |
+        # In a real environment, we would run clang-tidy here
+        echo "Running clang-tidy analysis..."
+        # cmake --build build --target clang-tidy

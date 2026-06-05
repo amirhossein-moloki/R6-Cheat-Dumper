@@ -1,4 +1,5 @@
 #include "driver.hpp"
+#include "logger.hpp"
 
 bool KernelInterface::Initialize() {
     m_hDevice = CreateFileW(L"\\\\.\\Global\\MemDrv", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
@@ -71,30 +72,30 @@ namespace driver {
 
     bool initialize() {
         if (g_user_mode) {
-            std::cout << "[*] User-mode selected." << std::endl;
+            LOG_INFO("User-mode selected.");
             return true;
         }
 
         if (g_interface->Initialize()) {
-            std::cout << "[+] Driver connection established." << std::endl;
+            LOG_INFO("Driver connection established.");
             return true;
         }
 
-        std::cout << "[!] Driver not found. Falling back to User-mode (ReadProcessMemory)." << std::endl;
+        LOG_WARN("Driver not found. Falling back to User-mode (ReadProcessMemory).");
         g_user_mode = true;
         return true;
     }
 
     uint64_t open_process(uint32_t pid) {
         if (g_user_mode) {
-            std::cout << "[*] Opening process " << pid << " with limited rights..." << std::endl;
+            LOG_INFO("Opening process {} with limited rights...", pid);
             HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
             if (hProcess == NULL) {
                 DWORD error = GetLastError();
-                std::cout << "[-] OpenProcess failed. Error code: " << error << " (0x" << std::hex << error << std::dec << ")" << std::endl;
+                LOG_ERROR("OpenProcess failed. Error code: {} (0x{:x})", error, error);
                 return 0;
             }
-            std::cout << "[+] Handle obtained: 0x" << std::hex << (uintptr_t)hProcess << std::dec << std::endl;
+            LOG_INFO("Handle obtained: 0x{:x}", (uintptr_t)hProcess);
             return (uint64_t)hProcess;
         }
         // In the kernel system, handle is just PID

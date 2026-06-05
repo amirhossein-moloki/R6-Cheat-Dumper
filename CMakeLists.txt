@@ -15,3 +15,7 @@ add_subdirectory(r6dumper)
 
 # Component 3: External Memory Interface
 add_subdirectory(r6external/rainbowsix-external)
+
+# Testing
+enable_testing()
+add_subdirectory(tests)

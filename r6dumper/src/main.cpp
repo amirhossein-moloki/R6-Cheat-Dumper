@@ -98,10 +98,30 @@ int main()
 
     std::cout << "[+] Module base: 0x" << std::hex << base << std::dec << std::endl;
 
-    memory = new uint8_t[seg_end(segment::data)];
+    // Discovery phase: Read PE headers first
+    uint8_t header[0x1000];
+    if (!driver::read_memory(handle, base, header, sizeof(header))) {
+        std::cout << "[-] Failed to read PE headers!" << std::endl;
+        system("pause");
+        return 1;
+    }
 
-    if (!driver::read_memory(handle, base, memory, (uint32_t)seg_end(segment::data))) {
-        std::cout << "[-] Error reading memory (Anti-cheat may be blocking ReadProcessMemory)." << std::endl;
+    if (!shared::discover_segments(header)) {
+        std::cout << "[-] Failed to discover segments from PE headers!" << std::endl;
+        system("pause");
+        return 1;
+    }
+
+    uint64_t total_size = seg_end_arr[2]; // .data end
+    std::cout << "[+] Discovered segments. Total size to map: 0x" << std::hex << total_size << std::dec << std::endl;
+    std::cout << "    .text:  0x" << std::hex << seg_start_arr[0] << " - 0x" << seg_end_arr[0] << std::dec << std::endl;
+    std::cout << "    .rdata: 0x" << std::hex << seg_start_arr[1] << " - 0x" << seg_end_arr[1] << std::dec << std::endl;
+    std::cout << "    .data:  0x" << std::hex << seg_start_arr[2] << " - 0x" << seg_end_arr[2] << std::dec << std::endl;
+
+    memory = new uint8_t[total_size];
+
+    if (!driver::read_memory(handle, base, memory, (uint32_t)total_size)) {
+        std::cout << "[-] Error reading full process memory." << std::endl;
         system("pause");
         return 1;
     }

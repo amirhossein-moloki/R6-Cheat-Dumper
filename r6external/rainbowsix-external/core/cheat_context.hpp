@@ -5,6 +5,7 @@
 #include <map>
 #include <string>
 #include "imemory_service.hpp"
+#include "config_service.hpp"
 #include "../util/math/vector.hpp"
 
 namespace core {

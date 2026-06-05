@@ -10,7 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # 1. Environment Detection
 # ============================================
 set(KITS_ROOT "C:/Program Files (x86)/Windows Kits/10")
-set(SDK_VERSION "10.0.28000.0")
+set(SDK_VERSION "10.0.22621.0")
 
 # ============================================
 # 2. External Dependencies
@@ -109,7 +109,7 @@ if(MSVC)
 
     set_target_properties(${PROJECT_NAME} PROPERTIES
         LINK_FLAGS "/SUBSYSTEM:CONSOLE"
-        VS_PLATFORM_TOOLSET "v145"
+        VS_PLATFORM_TOOLSET "v143"
     )
 endif()
 

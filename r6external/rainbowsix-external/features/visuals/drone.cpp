@@ -1,6 +1,9 @@
 #include "visuals.hpp"
 #include "../../core/cheat_context.hpp"
 
+bool visuals::state = false;
+int visuals::real_team = 0;
+
 void visuals::drone(bool enabled) {
     auto ctx = core::CheatContext::get_instance();
     auto mem = ctx->get_memory_service();

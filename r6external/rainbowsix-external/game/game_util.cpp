@@ -460,8 +460,13 @@ std::string entity::get_username() {
 	uintptr_t chain = globals::memory.read<uintptr_t>(this->_obj + offsets::entity_entity_info);
 	chain = globals::memory.read<uintptr_t>(chain + 0x1b0);
 
-	if (chain != 0)
-		return globals::memory.read<std::string>(chain); // dosent work?
+	if (chain != 0) {
+		char buffer[32];
+		if (globals::memory.read(chain, buffer, sizeof(buffer))) {
+			buffer[sizeof(buffer) - 1] = '\0';
+			return std::string(buffer);
+		}
+	}
 
 	return "BOT";
 }

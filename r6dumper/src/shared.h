@@ -209,7 +209,7 @@ static std::vector<uint64_t> find_xrefs(uint64_t offset, uint8_t rex = 0, uint8_
                 opcodes_match = memory[i] == rex && memory[i + 1] == instruction && memory[i + 2] == reg;
 
             if (opcodes_match &&
-                (relative ? !cmp_sig(sig, i + 3, sizeof(sig)) : !cmp_sig(abs_sig, i + 2, sizeof(abs_sig)))) {
+                (relative ? cmp_sig(sig, i + 3, sizeof(sig)) : cmp_sig(abs_sig, i + 2, sizeof(abs_sig)))) {
                 mtx.lock();
                 refs.push_back(i);
                 mtx.unlock();

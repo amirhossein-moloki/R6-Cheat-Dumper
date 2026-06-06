@@ -7,6 +7,7 @@
 #include "features/cheat.hpp"
 #include "features/visuals/visuals.hpp"
 #include "game/game_util.h"
+#include "config.hpp"
 #include "globals.hpp"
 #include "overlay/input/input.hpp"
 #include "overlay/overlay.hpp"

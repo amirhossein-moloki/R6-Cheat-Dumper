@@ -13,6 +13,12 @@ if(NOT DEFINED SDK_VERSION)
     set(SDK_VERSION "10.0.22621.0")
 endif()
 
+# Check for environmental SDK_VERSION if provided by GitHub Runner
+if(DEFINED ENV{WindowsSDKVersion})
+    string(REGEX REPLACE "\\\\$" "" SDK_VERSION_ENV "$ENV{WindowsSDKVersion}")
+    set(SDK_VERSION ${SDK_VERSION_ENV})
+endif()
+
 set(KITS_ROOT "C:/Program Files (x86)/Windows Kits/10")
 
 # ============================================

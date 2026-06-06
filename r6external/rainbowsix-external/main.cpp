@@ -160,6 +160,11 @@ void RunCheat() {
 	while (overlay::input::key_pressed(VK_DELETE) == 0) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		
+        if (context->get_state() == core::CheatState::Detached) {
+            LOG_P1("Cheat loop terminated due to system detachment.");
+            break;
+        }
+
         core::PerformanceMetrics::instance().start_frame();
 
         // Frame-based cache invalidation for performance and consistency
@@ -167,13 +172,15 @@ void RunCheat() {
         memory_service->enable_caching(true);
 
 		if (!game::in_match() || game::get_profile() == 0) {
-            context->set_state(core::CheatState::Attached);
+            if (context->get_state() != core::CheatState::Detached)
+                context->set_state(core::CheatState::Attached);
 			std::this_thread::sleep_for(std::chrono::milliseconds(1));
             core::PerformanceMetrics::instance().end_frame();
 			continue;
 		}
 
-        context->set_state(core::CheatState::InMatch);
+        if (context->get_state() != core::CheatState::Detached)
+            context->set_state(core::CheatState::InMatch);
 
         {
             core::ScopedTimer timer("cheat_loop");

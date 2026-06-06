@@ -5,7 +5,7 @@
 // Use core::ConfigService instead.
 // These are kept temporarily for backward compatibility during migration.
 
-namespace config {
+namespace cheat_config {
 	extern bool aimbot_enabled;
 	extern bool aimbot_silent_enabled;
 	extern float aimbot_fov;

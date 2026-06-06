@@ -4,20 +4,26 @@ project(memdrv VERSION 1.0 LANGUAGES CXX C)
 # ============================================
 # 1. Environment Detection (WDK 10.0.26100.0)
 # ============================================
-# Attempt to find Windows SDK/WDK version if not set
-if(NOT DEFINED SDK_VERSION)
-    set(SDK_VERSION "10.0.22621.0") # Fallback to a common version
-endif()
-
-# Check for environmental SDK_VERSION if provided by GitHub Runner
-if(DEFINED ENV{WindowsSDKVersion})
-    string(REGEX REPLACE "\\\\$" "" SDK_VERSION_ENV "$ENV{WindowsSDKVersion}")
-    set(SDK_VERSION ${SDK_VERSION_ENV})
-endif()
-
 set(KITS_ROOT "C:/Program Files (x86)/Windows Kits/10")
 
+# Attempt to find Windows SDK/WDK version if not set
+if(NOT DEFINED SDK_VERSION)
+    # Check for environmental SDK_VERSION if provided by GitHub Runner
+    if(DEFINED ENV{WindowsSDKVersion})
+        string(REGEX REPLACE "\\\\$" "" SDK_VERSION_ENV "$ENV{WindowsSDKVersion}")
+        set(SDK_VERSION ${SDK_VERSION_ENV})
+    else()
+        set(SDK_VERSION "10.0.22621.0") # Fallback to a common version
+    endif()
+endif()
+
 message(STATUS "Configuring Kernel Driver with WDK ${SDK_VERSION} at ${KITS_ROOT}")
+
+# Check if WDK headers exist, if not make component optional
+if(NOT EXISTS "${KITS_ROOT}/Include/${SDK_VERSION}/km/ntifs.h")
+    message(WARNING "WDK headers not found at ${KITS_ROOT}/Include/${SDK_VERSION}/km/. memdrv will not be built.")
+    return()
+endif()
 
 # ============================================
 # 2. Source Files

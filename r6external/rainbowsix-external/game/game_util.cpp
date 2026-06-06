@@ -537,7 +537,7 @@ void entity::aim_at_entity(entity target, uintptr_t bone) {
 
 		vec4_t local_angles = get_view_angles();
 
-		if (config::aimbot_silent_enabled) {
+		if (cheat_config::aimbot_silent_enabled) {
 			auto new_angle = (calculate_angle(globals::camera_view_translation, target.get_bone_pos(bone)) - calculate_euler(local_angles)) * 0.01745329251f; // works but bad code :(
 			set_gun_angles(vec4_t(new_angle.x, new_angle.y, new_angle.z, 0.f));
 		}

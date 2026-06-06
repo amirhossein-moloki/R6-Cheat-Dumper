@@ -39,22 +39,22 @@ void RunCheat() {
 
     // Sync legacy config with new config service during transition
     auto& settings = config_service->get_settings();
-    config::aimbot_enabled = settings.aimbot.enabled;
-    config::aimbot_silent_enabled = settings.aimbot.silent;
-    config::aimbot_fov = settings.aimbot.fov;
-    config::aimbot_smooth_factor = settings.aimbot.smooth_factor;
-    config::no_animations = settings.misc.no_animations;
-    config::freeze_lobby = settings.misc.freeze_lobby;
-    config::speed_multiplier = settings.misc.speed_multiplier;
-    config::gunmodel_fov = settings.misc.gunmodel_fov;
-    config::player_fov = settings.misc.player_fov;
-    config::noflash_enabled = settings.misc.noflash_enabled;
-    config::glow_red = settings.glow.red;
-    config::glow_green = settings.glow.green;
-    config::glow_blue = settings.glow.blue;
-    config::glow_alpha = settings.glow.alpha;
-    config::glow_distance = settings.glow.distance;
-    config::glow_opacity = settings.glow.opacity;
+    cheat_config::aimbot_enabled = settings.aimbot.enabled;
+    cheat_config::aimbot_silent_enabled = settings.aimbot.silent;
+    cheat_config::aimbot_fov = settings.aimbot.fov;
+    cheat_config::aimbot_smooth_factor = settings.aimbot.smooth_factor;
+    cheat_config::no_animations = settings.misc.no_animations;
+    cheat_config::freeze_lobby = settings.misc.freeze_lobby;
+    cheat_config::speed_multiplier = settings.misc.speed_multiplier;
+    cheat_config::gunmodel_fov = settings.misc.gunmodel_fov;
+    cheat_config::player_fov = settings.misc.player_fov;
+    cheat_config::noflash_enabled = settings.misc.noflash_enabled;
+    cheat_config::glow_red = settings.glow.red;
+    cheat_config::glow_green = settings.glow.green;
+    cheat_config::glow_blue = settings.glow.blue;
+    cheat_config::glow_alpha = settings.glow.alpha;
+    cheat_config::glow_distance = settings.glow.distance;
+    cheat_config::glow_opacity = settings.glow.opacity;
 
 	if (!memory_service->initialize()) {
         LOG_ERROR("Critical failure during memory service initialization.");

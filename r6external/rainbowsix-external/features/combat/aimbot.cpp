@@ -5,7 +5,7 @@
 #include "../../offsets.hpp"
 
 void combat::aimbot() {
-	if (!game::in_match() || !config::aimbot_enabled || !globals::w2s_good)
+	if (!game::in_match() || !cheat_config::aimbot_enabled || !globals::w2s_good)
 		return; // no in game / aimbot disabled
 
 	entity local_entity = game::get_local_entity();
@@ -16,7 +16,7 @@ void combat::aimbot() {
 	if (local_entity.get_health() <= 0)
 		return;
 
-	if (!config::aimbot_silent_enabled) {
+	if (!cheat_config::aimbot_silent_enabled) {
 		if (local_entity.is_firing() != 1) {
 			if (local_entity.is_firing() != 3)
 				norecoil(1, 0.25f, 0.25f, 0.5f);
@@ -36,8 +36,8 @@ void combat::aimbot() {
 		return; // if entity list is fine this should be good
 
 	entity closest_entity = NULL;
-	float closest_bone_dist = config::aimbot_fov;
-	if (config::aimbot_silent_enabled)
+	float closest_bone_dist = cheat_config::aimbot_fov;
+	if (cheat_config::aimbot_silent_enabled)
 		closest_bone_dist = 1000000;
 	int bone = 1; // set to 1 in case it somehow bugs out
 
@@ -60,7 +60,7 @@ void combat::aimbot() {
 			if (bone_screen_pos == vec3_t())
 				continue;
 
-			if (bone_screen_pos.z < 1.f && !config::aimbot_silent_enabled)
+			if (bone_screen_pos.z < 1.f && !cheat_config::aimbot_silent_enabled)
 				continue;
 			
 			const float bone_distance = abs(bone_screen_pos.dist_to(vec3_t(globals::window_horizontal_size / 2.f, globals::window_vertical_size / 2.f, bone_screen_pos.z)));

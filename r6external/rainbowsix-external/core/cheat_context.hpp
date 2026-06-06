@@ -4,11 +4,13 @@
 #include <memory>
 #include <map>
 #include <string>
+#include <atomic>
 #include "imemory_service.hpp"
 #include "../util/math/vector.hpp"
 
 namespace core {
     class ConfigService;
+    class HealthService;
 
     enum class CheatState {
         WaitingForProcess,
@@ -19,15 +21,20 @@ namespace core {
 
     class CheatContext {
     public:
-        CheatContext() : m_state(CheatState::WaitingForProcess), m_game_pid(0), m_module_base(0) {}
+        CheatContext() : m_state(CheatState::WaitingForProcess), m_game_pid(0), m_module_base(0) {
+            s_instance = this;
+        }
+
+        static CheatContext* get_instance() { return s_instance; }
 
         void set_memory_service(std::shared_ptr<IMemoryService> service) { m_memory_service = service; }
-
         std::shared_ptr<IMemoryService> get_memory_service() const { return m_memory_service; }
 
         void set_config_service(std::shared_ptr<ConfigService> service) { m_config_service = service; }
-
         std::shared_ptr<ConfigService> get_config_service() const { return m_config_service; }
+
+        void set_health_service(std::shared_ptr<HealthService> service) { m_health_service = service; }
+        std::shared_ptr<HealthService> get_health_service() const { return m_health_service; }
 
         CheatState get_state() const { return m_state; }
         void set_state(CheatState state) { m_state = state; }
@@ -69,12 +76,14 @@ namespace core {
         } camera_state;
 
         bool w2s_good = false;
-        // Targeted entity and other dynamic state can be added here
+        uintptr_t targeted_entity = 0;
 
     private:
-        CheatState m_state;
+        static CheatContext* s_instance;
+        std::atomic<CheatState> m_state;
         std::shared_ptr<IMemoryService> m_memory_service;
         std::shared_ptr<ConfigService> m_config_service;
+        std::shared_ptr<HealthService> m_health_service;
         uint32_t m_game_pid;
         uintptr_t m_module_base;
     };

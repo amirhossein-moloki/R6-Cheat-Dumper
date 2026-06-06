@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
-project(technical-suite VERSION 1.0 LANGUAGES CXX C)
+
+# Read version from file
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" VERSION_RAW)
+string(STRIP "${VERSION_RAW}" VERSION_STR)
+
+project(technical-suite VERSION ${VERSION_STR} LANGUAGES CXX C)
 
 # ============================================
 # Global Settings

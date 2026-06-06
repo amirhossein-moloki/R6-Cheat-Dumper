@@ -1,39 +1,45 @@
 #include "visuals.hpp"
 #include "../../offsets.hpp"
-#include "../../globals.hpp"
+#include "../../core/cheat_context.hpp"
 #include "../../game/game_util.h"
 
 void enabled_marker(uintptr_t entity_object, byte enable) {
-	uintptr_t chain = globals::memory.read<uintptr_t>(entity_object + offsets::entity_entity_info);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+
+	uintptr_t chain = mem->read<uintptr_t>(entity_object + offsets::entity_entity_info);
 	
 	if (chain == 0)
 		return;
 
-	chain = globals::memory.read<uintptr_t>(chain + offsets::entity_info_main_component);
+	chain = mem->read<uintptr_t>(chain + offsets::entity_info_main_component);
 	
 	if (chain == 0)
 		return;
 
 	for (auto current_component = 0x80; current_component < 0xF0; current_component += sizeof(std::uintptr_t)) {
-		uintptr_t entity_chain = globals::memory.read<uintptr_t>(chain + current_component);
+		uintptr_t entity_chain = mem->read<uintptr_t>(chain + current_component);
 		if (entity_chain == 0)
 			continue;
 
-		if (globals::memory.read<uintptr_t>(entity_chain) != globals::module_base + offsets::vtable)
+		if (mem->read<uintptr_t>(entity_chain) != ctx->addresses.vtable)
 			continue;
 
-		globals::memory.write<byte>(entity_chain + 0x552, enable);
-		globals::memory.write<byte>(entity_chain + 0x554, enable);
+		mem->write<byte>(entity_chain + 0x552, enable);
+		mem->write<byte>(entity_chain + 0x554, enable);
 	}
 }
 
 void visuals::spotted(bool enabled) {
-	uintptr_t entity_list = globals::memory.read<uintptr_t>(globals::game_manager + offsets::game_manager_entity_list);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+
+	uintptr_t entity_list = mem->read<uintptr_t>(ctx->addresses.game_manager + offsets::game_manager_entity_list);
 
 	if (entity_list == 0)
 		return;
 	
-	uint8_t entity_count = globals::memory.read<uint8_t>(globals::game_manager + offsets::game_manager_entity_count);
+	uint8_t entity_count = mem->read<uint8_t>(ctx->addresses.game_manager + offsets::game_manager_entity_count);
 
 	if (entity_count == 0)
 		return;
@@ -44,7 +50,7 @@ void visuals::spotted(bool enabled) {
 		return;
 	
 	for (int i = 0; i < entity_count; i++) {
-		entity player = entity(globals::memory.read<uintptr_t>(entity_list + i * offsets::game_manager_entity));
+		entity player = entity(mem->read<uintptr_t>(entity_list + i * offsets::game_manager_entity));
 		if (player.get_obj() == 0)
 			continue;
 

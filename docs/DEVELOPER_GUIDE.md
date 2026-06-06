@@ -46,6 +46,10 @@ This will configure the project, download dependencies (nlohmann_json, spdlog, g
 1.  Create a new service or feature class.
 2.  Register it in `CheatContext` if it's a shared resource.
 3.  Use the `Logger` for all output (avoid `std::cout`).
+    *   Use `LOG_P0` for critical/system-down events.
+    *   Use `LOG_P1` for high-severity errors.
+    *   Use `LOG_P2` for warnings.
+    *   Use `LOG_P3` for routine information.
 4.  Add unit tests in the `tests/` directory.
 
 ### Testing

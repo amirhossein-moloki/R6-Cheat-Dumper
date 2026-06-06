@@ -1,10 +1,13 @@
 #include "visuals.hpp"
-#include "../../globals.hpp"
+#include "../../core/cheat_context.hpp"
 
 void visuals::thirdperson(int value) {
-    uintptr_t chain = globals::memory.read<uintptr_t>(globals::fov_manager + 0x28);
-    chain = globals::memory.read<uintptr_t>(chain + 0x0);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+
+    uintptr_t chain = mem->read<uintptr_t>(ctx->addresses.fov_manager + 0x28);
+    chain = mem->read<uintptr_t>(chain + 0x0);
 
     if (chain != 0)
-        globals::memory.write<int>(chain + 0x48, value);
+        mem->write<int>(chain + 0x48, value);
 }

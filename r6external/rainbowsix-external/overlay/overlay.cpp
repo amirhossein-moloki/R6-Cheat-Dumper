@@ -1,5 +1,6 @@
 #include "overlay.hpp"
 #include "../core/logger.hpp"
+#include "../core/cheat_context.hpp"
 
 #include "minhook/MinHook.h"
 
@@ -13,7 +14,6 @@
 #include <d3d11.h>
 
 #include "../features/visuals/visuals.hpp"
-#include "../globals.hpp"
 #include "imgui/font.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_dx11.h"
@@ -39,21 +39,12 @@ namespace overlay {
 
 		if (address == 0) return false;
 
-		//address = address + 1;
-		//address = address + *reinterpret_cast<uint32_t*>(address) + 5;
-		//address = address - 0x100000000;
-
 		address += static_cast<uintptr_t>(*reinterpret_cast<uint32_t*>(address + 0x1)) + 0x5;
 		address -= 0x100000000;
 
 		_CHwFullScreenRenderTarget_Present = address;
 
-		// Offset for SwapChainBase can vary.
-		// In some versions, it's at address + 223 + 3.
-		// We should be careful here as it might crash if the offset is wrong.
-
         const auto target_ptr = reinterpret_cast<uint8_t*>(address + 223 + 3);
-        // Basic address validation without IsBadReadPtr which can be problematic
         if (target_ptr == nullptr) {
             LOG_ERROR("Invalid memory address for SwapChainBase offset!");
             return false;
@@ -97,24 +88,27 @@ namespace overlay {
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
+        auto ctx = core::CheatContext::get_instance();
+        auto mem = ctx ? ctx->get_memory_service() : nullptr;
+
 		if (game::update_display_size() && game::update_view_translation())
 			visuals::esp();
 
 		static bool menu_open = true;
 		if (input::key_down(VK_INSERT)) {
 			menu_open = !menu_open;
-			if (globals::input_manager != 0) {
+			if (ctx && ctx->addresses.input_manager != 0 && mem) {
 				if (menu_open)
-					globals::memory.write<byte>(globals::input_manager + 0x79, 1);
+					mem->write<byte>(ctx->addresses.input_manager + 0x79, 1);
 				else
-					globals::memory.write<byte>(globals::input_manager + 0x79, 0);
+					mem->write<byte>(ctx->addresses.input_manager + 0x79, 0);
 			}
 		}
 
 		if (menu_open) {
 			ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Once);
 			ImGui::Begin("rainbow-external###notifcation_window", nullptr, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-			if (!globals::memory.valid())
+			if (!mem || !mem->is_attached())
 				ImGui::Text("waiting for game %c", "|/-\\"[(int)(ImGui::GetTime() / 0.2f) & 3]);
 			else {
 				ImGui::Text("game state %d", game::state());
@@ -130,12 +124,6 @@ namespace overlay {
 			}
 			ImGui::End();
 		}
-
-		// dogshit crosshair code
-		/*ImDrawList* foreground = ImGui::GetForegroundDrawList();
-
-		foreground->AddLine(ImVec2(globals::window_horizontal_size / 2.f - 15.f, globals::window_vertical_size / 2.f), ImVec2(globals::window_horizontal_size / 2.f + 15.f, globals::window_vertical_size / 2.f), ImColor(255, 255, 255, 255));
-		foreground->AddLine(ImVec2(globals::window_horizontal_size / 2.f, globals::window_vertical_size / 2.f - 15.f), ImVec2(globals::window_horizontal_size / 2.f, globals::window_vertical_size / 2.f + 15.f), ImColor(255, 255, 255, 255));*/
 
 		// rendering
 		ImGui::Render();

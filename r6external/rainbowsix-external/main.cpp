@@ -8,7 +8,6 @@
 #include "features/visuals/visuals.hpp"
 #include "game/game_util.h"
 #include "config.hpp"
-#include "globals.hpp"
 #include "overlay/input/input.hpp"
 #include "overlay/overlay.hpp"
 
@@ -18,18 +17,22 @@
 #include "core/cheat_context.hpp"
 #include "core/memory_service.hpp"
 #include "core/config_service.hpp"
+#include "core/health_service.hpp"
+#include "core/performance_metrics.hpp"
 #include "core/logger.hpp"
 
 void RunCheat() {
     core::Logger::initialize();
-    LOG_INFO("Initializing technical suite (Phase 3 Transformation)...");
+    LOG_INFO("Initializing Technical Suite v1.1.0 (Phase 6 Enterprise)...");
 
     auto context = std::make_shared<core::CheatContext>();
     auto memory_service = std::make_shared<core::MemoryService>();
     auto config_service = std::make_shared<core::ConfigService>();
+    auto health_service = std::make_shared<core::HealthService>(context);
 
     context->set_memory_service(memory_service);
     context->set_config_service(config_service);
+    context->set_health_service(health_service);
 
     if (!config_service->initialize()) {
         LOG_ERROR("Failed to initialize configuration service.");
@@ -57,10 +60,14 @@ void RunCheat() {
     cheat_config::glow_opacity = settings.glow.opacity;
 
 	if (!memory_service->initialize()) {
-        LOG_ERROR("Critical failure during memory service initialization.");
+        LOG_P0("Critical failure during memory service initialization.");
 		system("pause");
 		exit(1);
 	}
+
+    if (!health_service->initialize()) {
+        LOG_P1("Failed to initialize health service.");
+    }
 
 	if (!memory_service->is_kernel_mode()) {
         LOG_INFO("User-mode interface initialized. Access level will be determined upon attachment.");
@@ -82,7 +89,6 @@ void RunCheat() {
 
 	uint32_t game_pid = util::get_pid_from_file("RainbowSix.exe");
     context->set_game_pid(game_pid);
-    globals::game_pid = game_pid; // Keep legacy globals in sync during transition
 
 	if (game_pid == 0) {
         LOG_ERROR("Invalid process id.");
@@ -113,7 +119,6 @@ void RunCheat() {
 		module_base = memory_service->get_module_base(L"RainbowSix_Vulkan.exe");
 	}
     context->set_module_base(module_base);
-    globals::module_base = module_base; // Keep legacy globals in sync during transition
 
 	if (module_base == 0) {
         LOG_ERROR("Failed to get module base address.");
@@ -135,10 +140,28 @@ void RunCheat() {
 	
     context->set_state(core::CheatState::Attached);
 
+    // Watchdog Thread for Enterprise-Grade Auto-Recovery
+    std::thread watchdog_thread([health_service, context]() {
+        LOG_INFO("Watchdog thread started.");
+        while (context->get_state() != core::CheatState::Detached) {
+            auto health = health_service->check_health();
+            if (health == core::SystemHealth::Critical) {
+                LOG_P0("Watchdog detected CRITICAL system failure!");
+                health_service->perform_auto_recovery();
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+        }
+        LOG_INFO("Watchdog thread exiting.");
+    });
+    watchdog_thread.detach();
+
     LOG_INFO("Cheat loop started. Press DELETE to exit.");
 	while (overlay::input::key_pressed(VK_DELETE) == 0) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		
+        core::PerformanceMetrics::instance().start_frame();
+
         // Frame-based cache invalidation for performance and consistency
         memory_service->clear_cache();
         memory_service->enable_caching(true);
@@ -146,11 +169,18 @@ void RunCheat() {
 		if (!game::in_match() || game::get_profile() == 0) {
             context->set_state(core::CheatState::Attached);
 			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            core::PerformanceMetrics::instance().end_frame();
 			continue;
 		}
 
         context->set_state(core::CheatState::InMatch);
-		cheat::run();
+
+        {
+            core::ScopedTimer timer("cheat_loop");
+		    cheat::run();
+        }
+
+        core::PerformanceMetrics::instance().end_frame();
 	}
 
 	cheat::restore();

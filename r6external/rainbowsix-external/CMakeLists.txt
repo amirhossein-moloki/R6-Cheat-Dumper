@@ -68,8 +68,6 @@ file(GLOB_RECURSE SOURCES
     "util/math/*.hpp"
     "config.cpp"
     "config.hpp"
-    "globals.cpp"
-    "globals.hpp"
     "main.cpp"
     "offsets.hpp"
 )

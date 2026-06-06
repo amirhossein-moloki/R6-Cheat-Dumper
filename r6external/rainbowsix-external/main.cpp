@@ -1,4 +1,3 @@
-#include <iostream>
 #include <thread>
 #include <Windows.h>
 
@@ -17,31 +16,60 @@
 
 #include "core/cheat_context.hpp"
 #include "core/memory_service.hpp"
+#include "core/logger.hpp"
 
 void RunCheat() {
-	std::cout << "[*] Initializing technical suite (Phase 2 Refactored)..." << std::endl;
+    core::Logger::initialize();
+    LOG_INFO("Initializing technical suite (Phase 3 Transformation)...");
 
     auto context = std::make_shared<core::CheatContext>();
     auto memory_service = std::make_shared<core::MemoryService>();
+    auto config_service = std::make_shared<core::ConfigService>();
 
     context->set_memory_service(memory_service);
+    context->set_config_service(config_service);
+
+    if (!config_service->initialize()) {
+        LOG_ERROR("Failed to initialize configuration service.");
+        system("pause");
+        exit(1);
+    }
+
+    // Sync legacy config with new config service during transition
+    auto& settings = config_service->get_settings();
+    config::aimbot_enabled = settings.aimbot.enabled;
+    config::aimbot_silent_enabled = settings.aimbot.silent;
+    config::aimbot_fov = settings.aimbot.fov;
+    config::aimbot_smooth_factor = settings.aimbot.smooth_factor;
+    config::no_animations = settings.misc.no_animations;
+    config::freeze_lobby = settings.misc.freeze_lobby;
+    config::speed_multiplier = settings.misc.speed_multiplier;
+    config::gunmodel_fov = settings.misc.gunmodel_fov;
+    config::player_fov = settings.misc.player_fov;
+    config::noflash_enabled = settings.misc.noflash_enabled;
+    config::glow_red = settings.glow.red;
+    config::glow_green = settings.glow.green;
+    config::glow_blue = settings.glow.blue;
+    config::glow_alpha = settings.glow.alpha;
+    config::glow_distance = settings.glow.distance;
+    config::glow_opacity = settings.glow.opacity;
 
 	if (!memory_service->initialize()) {
-		std::cout << "[-] Critical failure during memory service initialization." << std::endl;
+        LOG_ERROR("Critical failure during memory service initialization.");
 		system("pause");
 		exit(1);
 	}
 
 	if (!memory_service->is_kernel_mode()) {
-		std::cout << "[*] User-mode interface initialized. Access level will be determined upon attachment." << std::endl;
+        LOG_INFO("User-mode interface initialized. Access level will be determined upon attachment.");
 	}
 	else {
-		std::cout << "[+] Kernel-mode driver interface initialized (Full Access)." << std::endl;
+        LOG_INFO("Kernel-mode driver interface initialized (Full Access).");
 	}
 
 	overlay::enable();
 
-	std::cout << "[*] Looking for RainbowSix.exe..." << std::endl;
+    LOG_INFO("Looking for RainbowSix.exe...");
     context->set_state(core::CheatState::WaitingForProcess);
 	while (!util::is_game_open("Rainbow Six", "R6Game", "RainbowSix.exe")) {
 		if (overlay::input::key_pressed(VK_DELETE))
@@ -55,25 +83,25 @@ void RunCheat() {
     globals::game_pid = game_pid; // Keep legacy globals in sync during transition
 
 	if (game_pid == 0) {
-		std::cout << "[-] Invalid process id." << std::endl;
+        LOG_ERROR("Invalid process id.");
 		system("pause");
 		exit(1);
 	}
 
 	if (!memory_service->is_kernel_mode()) {
 		if (memory_service->has_write_access()) {
-			std::cout << "[+] Attached with FULL ACCESS (Read/Write)." << std::endl;
+            LOG_INFO("Attached with FULL ACCESS (Read/Write).");
 		}
 		else {
-			std::cout << "[!] Attached with LIMITED ACCESS (Read-Only)." << std::endl;
-			std::cout << "[!] Write-based features (No Recoil, Glow, etc.) will be disabled." << std::endl;
+            LOG_WARN("Attached with LIMITED ACCESS (Read-Only).");
+            LOG_WARN("Write-based features (No Recoil, Glow, etc.) will be disabled.");
 		}
 	}
 	
-	std::cout << "[+] Found PID: " << game_pid << std::endl;
+    LOG_INFO("Found PID: {}", game_pid);
 
 	if (!memory_service->attach(game_pid)) {
-		std::cout << "[-] Failed to attach to process memory." << std::endl;
+        LOG_ERROR("Failed to attach to process memory.");
 		system("pause");
 		exit(1);
 	}
@@ -86,26 +114,26 @@ void RunCheat() {
     globals::module_base = module_base; // Keep legacy globals in sync during transition
 
 	if (module_base == 0) {
-		std::cout << "[-] Failed to get module base address." << std::endl;
+        LOG_ERROR("Failed to get module base address.");
 		system("pause");
 		exit(1);
 	}
 
-	std::cout << "[+] Module base: 0x" << std::hex << module_base << std::dec << std::endl;
+    LOG_INFO("Module base: 0x{:x}", module_base);
 
 	Beep(500, 500);
 
-	std::cout << "[*] Updating game addresses..." << std::endl;
+    LOG_INFO("Updating game addresses...");
     // Note: game::update_addresses still uses globals for now, will refactor in later steps
 	while (!game::update_addresses()) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(500));
-		std::cout << "[*] Still waiting for game addresses to update..." << std::endl;
+        LOG_DEBUG("Still waiting for game addresses to update...");
 	}
-	std::cout << "[+] Game addresses updated." << std::endl;
+    LOG_INFO("Game addresses updated.");
 	
     context->set_state(core::CheatState::Attached);
 
-	std::cout << "[*] Cheat loop started. Press DELETE to exit." << std::endl;
+    LOG_INFO("Cheat loop started. Press DELETE to exit.");
 	while (overlay::input::key_pressed(VK_DELETE) == 0) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		
@@ -129,6 +157,7 @@ void RunCheat() {
 
 	Beep(500, 500);
 	
+    core::Logger::shutdown();
 	exit(0);
 }
 

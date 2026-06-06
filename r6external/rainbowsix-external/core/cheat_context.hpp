@@ -5,6 +5,7 @@
 #include <map>
 #include <string>
 #include "imemory_service.hpp"
+#include "config_service.hpp"
 #include "../util/math/vector.hpp"
 
 namespace core {
@@ -19,13 +20,13 @@ namespace core {
     public:
         CheatContext() : m_state(CheatState::WaitingForProcess), m_game_pid(0), m_module_base(0) {}
 
-        void set_memory_service(std::shared_ptr<IMemoryService> service) {
-            m_memory_service = service;
-        }
+        void set_memory_service(std::shared_ptr<IMemoryService> service) { m_memory_service = service; }
 
-        std::shared_ptr<IMemoryService> get_memory_service() const {
-            return m_memory_service;
-        }
+        std::shared_ptr<IMemoryService> get_memory_service() const { return m_memory_service; }
+
+        void set_config_service(std::shared_ptr<ConfigService> service) { m_config_service = service; }
+
+        std::shared_ptr<ConfigService> get_config_service() const { return m_config_service; }
 
         CheatState get_state() const { return m_state; }
         void set_state(CheatState state) { m_state = state; }
@@ -66,9 +67,13 @@ namespace core {
             float camera_view_fovy = 0;
         } camera_state;
 
+        bool w2s_good = false;
+        // Targeted entity and other dynamic state can be added here
+
     private:
         CheatState m_state;
         std::shared_ptr<IMemoryService> m_memory_service;
+        std::shared_ptr<ConfigService> m_config_service;
         uint32_t m_game_pid;
         uintptr_t m_module_base;
     };

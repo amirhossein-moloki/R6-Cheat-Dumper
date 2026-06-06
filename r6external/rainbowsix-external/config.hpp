@@ -1,6 +1,10 @@
 #ifndef _CONFIG_HPP_
 #define _CONFIG_HPP_
 
+// LEGACY CONFIG - DEPRECATED
+// Use core::ConfigService instead.
+// These are kept temporarily for backward compatibility during migration.
+
 namespace config {
 	extern bool aimbot_enabled;
 	extern bool aimbot_silent_enabled;

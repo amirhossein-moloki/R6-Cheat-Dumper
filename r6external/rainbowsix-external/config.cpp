@@ -3,10 +3,11 @@
 namespace config {
 	bool aimbot_enabled = true;
 	bool aimbot_silent_enabled = false;
-	float aimbot_fov = 100;
+	float aimbot_fov = 100.f;
 	float aimbot_smooth_factor = 40.f;
 
 	bool no_animations = true;
+	bool freeze_lobby = false;
 
 	float speed_multiplier = 1.18f;
 

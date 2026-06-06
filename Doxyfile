@@ -1,0 +1,12 @@
+PROJECT_NAME           = "Technical Suite"
+OUTPUT_DIRECTORY       = docs/api
+GENERATE_LATEX         = NO
+GENERATE_MAN           = NO
+GENERATE_RTF           = NO
+CASE_SENSE_NAMES       = NO
+INPUT                  = r6external/rainbowsix-external/core r6external/rainbowsix-external/driver r6dumper/src
+RECURSIVE              = YES
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+FILE_PATTERNS          = *.cpp *.hpp *.h

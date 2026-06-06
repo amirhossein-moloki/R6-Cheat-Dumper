@@ -9,7 +9,7 @@
 #define ENTRY_SEPERATOR "////"
 
 namespace adder {
-	static std::vector<string_reference> do_string_refs(const std::string& name, uint64_t address) {
+	static std::vector<StringReference> do_string_refs(const std::string& name, uint64_t address) {
 		auto str_refs = shared::find_string_refs_near(address);
 		if (str_refs.empty())
 			return str_refs;
@@ -72,9 +72,9 @@ namespace adder {
 		std::cin.get();
 		std::getline(std::cin, name);
 
-		std::vector<string_reference> str_refs;
+		std::vector<StringReference> str_refs;
 
-		if (offset > seg_start(segment::data) && offset < seg_end(segment::data)) {
+		if (offset > seg_start(Segment::Data) && offset < seg_end(Segment::Data)) {
 			auto offset_refs = shared::find_xrefs(offset);
 
 			if (offset_refs.empty()) {
@@ -102,14 +102,14 @@ namespace adder {
 			}
 		}
 
-		else if (offset > seg_start(segment::text) && offset < seg_end(segment::text)) {
+		else if (offset > seg_start(Segment::Text) && offset < seg_end(Segment::Text)) {
 			str_refs = do_string_refs(name, offset);
 			if (str_refs.empty())
 				do_hex_dump(name, offset);
 		}
 
 		// if the offset is out of bounds, assume it is a decryption offset
-		else if (offset > seg_end(segment::data)) {
+		else if (offset > seg_end(Segment::Data)) {
 			printf("Encryption value detected, enter offset: ");
 
 			uint64_t enc_value = offset;
@@ -149,7 +149,7 @@ namespace adder {
 		if (str_refs.empty())
 			return;
 
-		auto cmp = [](const string_reference& a, const string_reference& b) {
+		auto cmp = [](const StringReference& a, const StringReference& b) {
 			if (a.reference_count == b.reference_count)
 				return a.offset_to_desired_address <= b.offset_to_desired_address;
 

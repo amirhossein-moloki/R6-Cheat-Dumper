@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "../config.hpp"
+#include "../driver/driver.hpp"
 #include "../game/game_util.h"
 #include "combat/combat.hpp"
 #include "exploits/exploits.hpp"

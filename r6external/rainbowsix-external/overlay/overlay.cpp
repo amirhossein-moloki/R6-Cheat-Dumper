@@ -1,4 +1,5 @@
 #include "overlay.hpp"
+#include "../core/logger.hpp"
 
 #include "minhook/MinHook.h"
 
@@ -48,15 +49,17 @@ namespace overlay {
 		_CHwFullScreenRenderTarget_Present = address;
 
 		// Offset for SwapChainBase can vary. Let's add more logging if possible or use a more robust way.
+		// Offset for SwapChainBase can vary. Let's add more logging if possible or use a more robust way.
 		// In some versions, it's at address + 223 + 3.
 		// We should be careful here as it might crash if the offset is wrong.
-		__try {
-			_CHwFullScreenRenderTarget_SwapChainBase_Offset = *reinterpret_cast<uint8_t*>(address + 223 + 3);
-		}
-		__except (EXCEPTION_EXECUTE_HANDLER) {
-			std::cout << "[-] Exception while reading SwapChainBase offset!" << std::endl;
-			return false;
-		}
+
+        // Structured exception handling cannot be used in functions that require object unwinding (like those with std::shared_ptr).
+        // Since this is a critical initialization step, we'll perform a basic check.
+        if (IsBadReadPtr(reinterpret_cast<void*>(address + 223 + 3), sizeof(uint8_t))) {
+            LOG_ERROR("Invalid memory address for SwapChainBase offset!");
+            return false;
+        }
+        _CHwFullScreenRenderTarget_SwapChainBase_Offset = *reinterpret_cast<uint8_t*>(address + 223 + 3);
 
 		return _CHwFullScreenRenderTarget_Present != 0;
 	}
@@ -146,20 +149,20 @@ namespace overlay {
 	}
 
 	void enable() {
-		std::cout << "[*] Enabling overlay..." << std::endl;
+		LOG_INFO("Enabling overlay...");
 		if (!find_target_present()) {
-			std::cout << "[-] Failed to find CHwFullScreenRenderTarget::Present pattern in dwmcore.dll" << std::endl;
+			LOG_ERROR("Failed to find CHwFullScreenRenderTarget::Present pattern in dwmcore.dll");
 			system("pause");
 			exit(1);
 		}
-		std::cout << "[+] Found Present address: 0x" << std::hex << _CHwFullScreenRenderTarget_Present << std::dec << std::endl;
+		LOG_INFO("Found Present address: 0x{:x}", _CHwFullScreenRenderTarget_Present);
 
 		if (!find_swap_chain_offset()) {
-			std::cout << "[-] Failed to find DXGI swap chain offset in dwmcore.dll" << std::endl;
+			LOG_ERROR("Failed to find DXGI swap chain offset in dwmcore.dll");
 			system("pause");
 			exit(1);
 		}
-		std::cout << "[+] Found SwapChain offset: 0x" << std::hex << _CDWMSwapChain_DxgiSwapChain_Offset << std::dec << std::endl;
+		LOG_INFO("Found SwapChain offset: 0x{:x}", _CDWMSwapChain_DxgiSwapChain_Offset);
 
 		input::enable();
 

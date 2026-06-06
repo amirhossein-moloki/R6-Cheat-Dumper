@@ -5,10 +5,22 @@ project(r6dumper VERSION 1.0 LANGUAGES CXX C)
 # 1. Environment Detection
 # ============================================
 set(KITS_ROOT "C:/Program Files (x86)/Windows Kits/10")
-set(SDK_VERSION "10.0.28000.0")
+set(SDK_VERSION "10.0.26100.0")
 
 # ============================================
-# 2. Source Files
+# 2. External Dependencies
+# ============================================
+include(FetchContent)
+
+FetchContent_Declare(
+    spdlog
+    GIT_REPOSITORY https://github.com/gabime/spdlog.git
+    GIT_TAG v1.12.0
+)
+FetchContent_MakeAvailable(spdlog)
+
+# ============================================
+# 3. Source Files
 # ============================================
 file(GLOB SOURCES
     "src/*.cpp"
@@ -17,12 +29,12 @@ file(GLOB SOURCES
 )
 
 # ============================================
-# 3. Target Definition
+# 4. Target Definition
 # ============================================
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 # ============================================
-# 4. Include Directories
+# 5. Include Directories
 # ============================================
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -31,7 +43,14 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 )
 
 # ============================================
-# 5. Compiler & Linker Options
+# 6. Link Libraries
+# ============================================
+target_link_libraries(${PROJECT_NAME}
+    spdlog::spdlog
+)
+
+# ============================================
+# 7. Compiler & Linker Options
 # ============================================
 if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE
@@ -42,7 +61,7 @@ if(MSVC)
 
     set_target_properties(${PROJECT_NAME} PROPERTIES
         LINK_FLAGS "/SUBSYSTEM:CONSOLE"
-        VS_PLATFORM_TOOLSET "v145"
+        VS_PLATFORM_TOOLSET "v143"
     )
 endif()
 

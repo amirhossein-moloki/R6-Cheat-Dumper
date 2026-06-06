@@ -1,4 +1,5 @@
 #include "driver.hpp"
+#include "../core/logger.hpp"
 
 bool KernelInterface::Initialize() {
     m_hDevice = CreateFileW(L"\\\\.\\Global\\MemDrv", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
@@ -62,12 +63,12 @@ namespace driver {
 		if (g_user_mode) return true;
 
 		if (g_interface->Initialize()) {
-			std::cout << "[+] Driver connection established." << std::endl;
+			LOG_INFO("Driver connection established.");
 			g_has_write_access = true;
 			return true;
 		}
 
-		std::cout << "[!] Driver not found. Falling back to User-mode." << std::endl;
+		LOG_WARN("Driver not found. Falling back to User-mode.");
 		g_user_mode = true;
 		g_has_write_access = false;
 		return true;

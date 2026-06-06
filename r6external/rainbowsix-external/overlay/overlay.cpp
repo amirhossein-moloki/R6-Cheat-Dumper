@@ -13,6 +13,7 @@
 #include <mutex>
 #include <d3d11.h>
 
+#include "../game/game_util.h"
 #include "../features/visuals/visuals.hpp"
 #include "imgui/font.h"
 #include "imgui/imgui.h"

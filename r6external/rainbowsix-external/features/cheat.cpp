@@ -11,7 +11,7 @@
 #include "visuals/visuals.hpp"
 
 void cheat::run() {
-	if (driver::g_has_write_access) {
+	if (::driver::g_has_write_access) {
 		//combat::aimbot();
 		combat::norecoil(1, 0.25f, 0.25f, 0.15f);
 		combat::rapid_fire(true);
@@ -45,7 +45,7 @@ void cheat::run() {
 }
 
 void cheat::restore() {
-	if (driver::g_has_write_access) {
+	if (::driver::g_has_write_access) {
 		combat::norecoil(1, 0.75f, 0.75f, 1.f);
 		combat::rapid_fire(false); // idk why i do this considering its absolutely pointless
 

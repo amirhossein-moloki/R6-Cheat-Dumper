@@ -16,6 +16,7 @@
 
 #include "core/cheat_context.hpp"
 #include "core/memory_service.hpp"
+#include "core/config_service.hpp"
 #include "core/logger.hpp"
 
 void RunCheat() {

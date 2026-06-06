@@ -9,8 +9,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # ============================================
 # 1. Environment Detection
 # ============================================
+if(NOT DEFINED SDK_VERSION)
+    set(SDK_VERSION "10.0.22621.0")
+endif()
+
 set(KITS_ROOT "C:/Program Files (x86)/Windows Kits/10")
-set(SDK_VERSION "10.0.26100.0")
 
 # ============================================
 # 2. External Dependencies

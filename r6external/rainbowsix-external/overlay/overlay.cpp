@@ -48,18 +48,17 @@ namespace overlay {
 
 		_CHwFullScreenRenderTarget_Present = address;
 
-		// Offset for SwapChainBase can vary. Let's add more logging if possible or use a more robust way.
-		// Offset for SwapChainBase can vary. Let's add more logging if possible or use a more robust way.
+		// Offset for SwapChainBase can vary.
 		// In some versions, it's at address + 223 + 3.
 		// We should be careful here as it might crash if the offset is wrong.
 
-        // Structured exception handling cannot be used in functions that require object unwinding (like those with std::shared_ptr).
-        // Since this is a critical initialization step, we'll perform a basic check.
-        if (IsBadReadPtr(reinterpret_cast<void*>(address + 223 + 3), sizeof(uint8_t))) {
+        const auto target_ptr = reinterpret_cast<uint8_t*>(address + 223 + 3);
+        // Basic address validation without IsBadReadPtr which can be problematic
+        if (target_ptr == nullptr) {
             LOG_ERROR("Invalid memory address for SwapChainBase offset!");
             return false;
         }
-        _CHwFullScreenRenderTarget_SwapChainBase_Offset = *reinterpret_cast<uint8_t*>(address + 223 + 3);
+        _CHwFullScreenRenderTarget_SwapChainBase_Offset = *target_ptr;
 
 		return _CHwFullScreenRenderTarget_Present != 0;
 	}

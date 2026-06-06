@@ -5,7 +5,16 @@ project(r6dumper VERSION 1.0 LANGUAGES CXX C)
 # 1. Environment Detection
 # ============================================
 set(KITS_ROOT "C:/Program Files (x86)/Windows Kits/10")
-set(SDK_VERSION "10.0.26100.0")
+
+if(NOT DEFINED SDK_VERSION)
+    # Check for environmental SDK_VERSION if provided by GitHub Runner
+    if(DEFINED ENV{WindowsSDKVersion})
+        string(REGEX REPLACE "\\\\$" "" SDK_VERSION_ENV "$ENV{WindowsSDKVersion}")
+        set(SDK_VERSION ${SDK_VERSION_ENV})
+    else()
+        set(SDK_VERSION "10.0.22621.0")
+    endif()
+endif()
 
 # ============================================
 # 2. External Dependencies

@@ -11,7 +11,7 @@
 #include "visuals/visuals.hpp"
 
 void cheat::run() {
-	if (driver::g_has_write_access) {
+	if (::driver::g_has_write_access) {
 		//combat::aimbot();
 		combat::norecoil(1, 0.25f, 0.25f, 0.15f);
 		combat::rapid_fire(true);
@@ -21,7 +21,7 @@ void cheat::run() {
 		//movement::speed(155);
 
 		//exploits::unlock_all(true);
-		exploits::remove_animations(config::no_animations ? 0 : 16777216);
+		exploits::remove_animations(cheat_config::no_animations ? 0 : 16777216);
 
 		//visuals::player_fov(options::player_fov);
 		//visuals::gunmodel_fov(options::gunmodel_fov + 0.5f);
@@ -37,7 +37,7 @@ void cheat::run() {
 		//visuals::gravity(true);
 		//visuals::noflash(options::noflash_enabled ? 0 : 1);
 		if (game::in_match())
-			visuals::glow(config::glow_red, config::glow_green, config::glow_blue, config::glow_alpha, config::glow_opacity, config::glow_distance);
+			visuals::glow(cheat_config::glow_red, cheat_config::glow_green, cheat_config::glow_blue, cheat_config::glow_alpha, cheat_config::glow_opacity, cheat_config::glow_distance);
 		else
 			visuals::glow(0.4078431427f, 0.2980392277f, 0.1960784346f, 1.f, 7.f, 0.f);
 		visuals::spotted(true);
@@ -45,7 +45,7 @@ void cheat::run() {
 }
 
 void cheat::restore() {
-	if (driver::g_has_write_access) {
+	if (::driver::g_has_write_access) {
 		combat::norecoil(1, 0.75f, 0.75f, 1.f);
 		combat::rapid_fire(false); // idk why i do this considering its absolutely pointless
 

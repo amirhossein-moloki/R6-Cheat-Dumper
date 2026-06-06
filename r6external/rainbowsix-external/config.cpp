@@ -1,6 +1,6 @@
 #include "config.hpp"
 
-namespace config {
+namespace cheat_config {
 	bool aimbot_enabled = true;
 	bool aimbot_silent_enabled = false;
 	float aimbot_fov = 100.f;

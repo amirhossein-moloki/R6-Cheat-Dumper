@@ -93,10 +93,4 @@ if(MSVC)
         wdmsec.lib
     )
 
-    # ============================================
-    # 8. Platform Properties
-    # ============================================
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-        VS_PLATFORM_TOOLSET "v143"
-    )
 endif()

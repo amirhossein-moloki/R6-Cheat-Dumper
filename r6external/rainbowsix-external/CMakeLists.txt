@@ -9,10 +9,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # ============================================
 # 1. Environment Detection
 # ============================================
-set(KITS_ROOT "C:/Program Files (x86)/Windows Kits/10")
+if(DEFINED ENV{WindowsSdkDir})
+    file(TO_CMAKE_PATH "$ENV{WindowsSdkDir}" KITS_ROOT)
+else()
+    set(KITS_ROOT "C:/Program Files (x86)/Windows Kits/10")
+endif()
 
 if(NOT DEFINED SDK_VERSION)
-    # Check for environmental SDK_VERSION if provided by GitHub Runner
     if(DEFINED ENV{WindowsSDKVersion})
         string(REGEX REPLACE "\\\\$" "" SDK_VERSION_ENV "$ENV{WindowsSDKVersion}")
         set(SDK_VERSION ${SDK_VERSION_ENV})

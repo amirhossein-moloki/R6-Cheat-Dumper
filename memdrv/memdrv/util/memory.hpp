@@ -4,7 +4,7 @@
 #include "../defs.hpp"
 
 namespace util {
-    NTSTATUS GetProcessModuleBase(PEPROCESS process, PCWSTR moduleName, PUINT64 baseAddress);
+    NTSTATUS GetProcessModuleBase(PEPROCESS process, PCWSTR moduleName, PULONGLONG baseAddress);
 }
 
 #endif

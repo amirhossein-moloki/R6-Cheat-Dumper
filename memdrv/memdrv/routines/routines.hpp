@@ -4,9 +4,9 @@
 #include "../defs.hpp"
 
 namespace routines {
-    NTSTATUS ReadProcessMemoryKernel(HANDLE pid, UINT64 address, UINT8* buffer, UINT64 size);
-    NTSTATUS WriteProcessMemoryKernel(HANDLE pid, UINT64 address, UINT8* buffer, UINT64 size);
-    NTSTATUS GetModuleBaseAddress(HANDLE pid, PCWSTR moduleName, PUINT64 baseAddress);
+    NTSTATUS ReadProcessMemoryKernel(HANDLE pid, ULONGLONG address, UCHAR* buffer, ULONGLONG size);
+    NTSTATUS WriteProcessMemoryKernel(HANDLE pid, ULONGLONG address, UCHAR* buffer, ULONGLONG size);
+    NTSTATUS GetModuleBaseAddress(HANDLE pid, PCWSTR moduleName, PULONGLONG baseAddress);
     NTSTATUS GetProcessIdByName(PCWSTR processName, PHANDLE pid);
     PEPROCESS GetProcessByPid(HANDLE pid);
 }

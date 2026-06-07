@@ -20,7 +20,9 @@ if exist "!VSWHERE!" (
     )
 )
 
-if "!VS_VERSION!"=="17" (
+if "!VS_VERSION!"=="18" (
+    set "GENERATOR=Visual Studio 18 2026"
+) else if "!VS_VERSION!"=="17" (
     set "GENERATOR=Visual Studio 17 2022"
 ) else if "!VS_VERSION!"=="16" (
     set "GENERATOR=Visual Studio 16 2019"
@@ -39,13 +41,18 @@ if "!GENERATOR!"=="" (
     echo [*] Attempting manual discovery...
 
     :: Try probing for common versions
-    cmake .. -G "Visual Studio 17 2022" -A x64 >nul 2>&1
+    cmake .. -G "Visual Studio 18 2026" -A x64 >nul 2>&1
     if !errorlevel! equ 0 (
-        set "GENERATOR=Visual Studio 17 2022"
+        set "GENERATOR=Visual Studio 18 2026"
     ) else (
-        cmake .. -G "Visual Studio 16 2019" -A x64 >nul 2>&1
+        cmake .. -G "Visual Studio 17 2022" -A x64 >nul 2>&1
         if !errorlevel! equ 0 (
-            set "GENERATOR=Visual Studio 16 2019"
+            set "GENERATOR=Visual Studio 17 2022"
+        ) else (
+            cmake .. -G "Visual Studio 16 2019" -A x64 >nul 2>&1
+            if !errorlevel! equ 0 (
+                set "GENERATOR=Visual Studio 16 2019"
+            )
         )
     )
 )

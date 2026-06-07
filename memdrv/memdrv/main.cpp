@@ -1,5 +1,5 @@
-#include <wdmsec.h>
 #include "defs.hpp"
+#include <wdmsec.h>
 #include "routines/routines.hpp"
 #include "util/clean.hpp"
 

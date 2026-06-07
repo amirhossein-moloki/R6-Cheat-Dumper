@@ -2,16 +2,23 @@ cmake_minimum_required(VERSION 3.20)
 project(memdrv VERSION 1.0 LANGUAGES CXX C)
 
 # ============================================
-# 1. Environment Detection (WDK 10.0.26100.0)
+# 1. Environment Detection
 # ============================================
-set(KITS_ROOT "C:/Program Files (x86)/Windows Kits/10")
+if(DEFINED ENV{WDKContentRoot})
+    file(TO_CMAKE_PATH "$ENV{WDKContentRoot}" KITS_ROOT)
+elseif(DEFINED ENV{WindowsSdkDir})
+    file(TO_CMAKE_PATH "$ENV{WindowsSdkDir}" KITS_ROOT)
+else()
+    set(KITS_ROOT "C:/Program Files (x86)/Windows Kits/10")
+endif()
 
 # Attempt to find Windows SDK/WDK version if not set
 if(NOT DEFINED SDK_VERSION)
-    # Check for environmental SDK_VERSION if provided by GitHub Runner
     if(DEFINED ENV{WindowsSDKVersion})
         string(REGEX REPLACE "\\\\$" "" SDK_VERSION_ENV "$ENV{WindowsSDKVersion}")
         set(SDK_VERSION ${SDK_VERSION_ENV})
+    elseif(DEFINED ENV{WDK_VERSION})
+        set(SDK_VERSION "$ENV{WDK_VERSION}")
     else()
         set(SDK_VERSION "10.0.22621.0") # Fallback to a common version
     endif()

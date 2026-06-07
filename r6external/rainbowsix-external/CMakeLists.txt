@@ -117,6 +117,8 @@ if(MSVC)
         /Qspectre-
     )
 
+    target_compile_definitions(${PROJECT_NAME} PRIVATE _AMD64_)
+
     set_target_properties(${PROJECT_NAME} PROPERTIES
         LINK_FLAGS "/SUBSYSTEM:CONSOLE"
     )

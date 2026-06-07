@@ -26,4 +26,8 @@ target_include_directories(unit_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../r6external/rainbowsix-external
 )
 
+if(MSVC)
+    target_compile_definitions(unit_tests PRIVATE _AMD64_)
+endif()
+
 add_test(NAME AllUnitTests COMMAND unit_tests)

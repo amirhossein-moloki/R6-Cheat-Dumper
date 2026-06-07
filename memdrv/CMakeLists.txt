@@ -72,6 +72,8 @@ if(MSVC)
         /EHc-
     )
 
+    target_compile_definitions(${PROJECT_NAME} PRIVATE _AMD64_)
+
     # ============================================
     # 6. Linker Options
     # ============================================

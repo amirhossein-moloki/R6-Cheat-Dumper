@@ -1,18 +1,23 @@
 #include "game_util.h"
 
 #include "../config.hpp"
-#include "../globals.hpp"
 #include "../offsets.hpp"
 #include "../util/math/constants.hpp"
+#include "../core/cheat_context.hpp"
+#include "../core/imemory_service.hpp"
 
 bool game::in_match() {
-	const auto game_state = globals::memory.read<int8_t>(globals::round_manager + 0x2e8);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+	const auto game_state = mem->read<int8_t>(ctx->addresses.round_manager + 0x2e8);
 	// in action phase, or in preparation phase
 	return game_state == 2 || game_state == 3;
 }
 
 int game::gamestate() {
-	return globals::memory.read<int8_t>(globals::round_manager + 0x2E8);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+	return mem->read<int8_t>(ctx->addresses.round_manager + 0x2E8);
 }
 
 int game::state() {
@@ -25,54 +30,58 @@ int game::state() {
 	Loading game / In game/ Finishing the game = 6
 	*/
 
-	uintptr_t chain = globals::memory.read<uint64_t>(globals::game_manager + 0x20);
-	chain = globals::memory.read<uintptr_t>(chain + 0x260);
-	chain = globals::memory.read<uintptr_t>(chain + 0x50);
-	chain = globals::memory.read<uintptr_t>(chain + 0x0);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+	uintptr_t chain = mem->read<uint64_t>(ctx->addresses.game_manager + 0x20);
+	chain = mem->read<uintptr_t>(chain + 0x260);
+	chain = mem->read<uintptr_t>(chain + 0x50);
+	chain = mem->read<uintptr_t>(chain + 0x0);
 
 	if (chain != 0)
-		return globals::memory.read<int>(chain + 0x128);
+		return mem->read<int>(chain + 0x128);
 
 	return 0;
 }
 
 entity game::get_local_entity() {
-	uintptr_t chain = globals::memory.read<uintptr_t>(globals::game_profile + 0x68);
-	chain = globals::memory.read<uintptr_t>(chain + 0x0);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+	uintptr_t chain = mem->read<uintptr_t>(ctx->addresses.game_profile + 0x68);
+	chain = mem->read<uintptr_t>(chain + 0x0);
 
 	if (chain != 0)
-		return globals::memory.read<uintptr_t>(chain + 0x28);
-	
-	/*uintptr_t chain = globals::memory.read<uintptr_t>(globals::game_profile + 0x78);
-	chain = globals::memory.read<uintptr_t>(chain + 0x0);
-
-	if (chain != 0)
-		return globals::memory.read<uintptr_t>(chain + 0x28);*/
+		return mem->read<uintptr_t>(chain + 0x28);
 
 	return 0;
 }
 
 uint64_t game::get_profile() {
-	uintptr_t player_profile_ptr = globals::memory.read<uintptr_t>(globals::game_profile + 0x68);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+	uintptr_t player_profile_ptr = mem->read<uintptr_t>(ctx->addresses.game_profile + 0x68);
 
 	if (player_profile_ptr != 0)
-		return globals::memory.read<uint64_t>(player_profile_ptr);
+		return mem->read<uint64_t>(player_profile_ptr);
 
 	return 0;
 }
 
 bool game::update_addresses() {
-	globals::game_manager = globals::memory.read<uintptr_t>(globals::module_base + offsets::game_manager);
-	globals::game_profile = globals::memory.read<uintptr_t>(globals::module_base + offsets::game_profile);
-	globals::round_manager = globals::memory.read<uintptr_t>(globals::module_base + offsets::round_manager);
-	globals::network_manager = globals::memory.read<uintptr_t>(globals::module_base + offsets::network_manager);
-	globals::input_manager = globals::memory.read<uintptr_t>(globals::module_base + offsets::input_manager);
-	globals::vtable = globals::memory.read<uintptr_t>(globals::module_base + offsets::vtable);
-	globals::glow_manager = globals::memory.read<uintptr_t>(globals::module_base + offsets::glow_manager);
-	globals::fov_manager = globals::memory.read<uintptr_t>(globals::module_base + offsets::fov_manager);
-	globals::freeze_manager = globals::memory.read<uintptr_t>(globals::module_base + offsets::freeze_manager);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+    auto base = ctx->get_module_base();
 
-	if (globals::game_manager == 0 || globals::game_profile == 0 || globals::round_manager == 0 || globals::network_manager == 0 || globals::input_manager  == 0 || globals::vtable == 0 || globals::glow_manager == 0 || globals::fov_manager == 0 || globals::freeze_manager == 0)
+	ctx->addresses.game_manager = mem->read<uintptr_t>(base + offsets::game_manager);
+	ctx->addresses.game_profile = mem->read<uintptr_t>(base + offsets::game_profile);
+	ctx->addresses.round_manager = mem->read<uintptr_t>(base + offsets::round_manager);
+	ctx->addresses.network_manager = mem->read<uintptr_t>(base + offsets::network_manager);
+	ctx->addresses.input_manager = mem->read<uintptr_t>(base + offsets::input_manager);
+	ctx->addresses.vtable = mem->read<uintptr_t>(base + offsets::vtable);
+	ctx->addresses.glow_manager = mem->read<uintptr_t>(base + offsets::glow_manager);
+	ctx->addresses.fov_manager = mem->read<uintptr_t>(base + offsets::fov_manager);
+	ctx->addresses.freeze_manager = mem->read<uintptr_t>(base + offsets::freeze_manager);
+
+	if (ctx->addresses.game_manager == 0 || ctx->addresses.game_profile == 0 || ctx->addresses.round_manager == 0 || ctx->addresses.network_manager == 0 || ctx->addresses.input_manager  == 0 || ctx->addresses.vtable == 0 || ctx->addresses.glow_manager == 0 || ctx->addresses.fov_manager == 0 || ctx->addresses.freeze_manager == 0)
 		return false;
 
 	return true;
@@ -134,15 +143,17 @@ bool game::skip_bad_angle(vec4_t target_angle, vec4_t local_angle) {
 }
 
 bool game::update_display_size() {
-	uintptr_t chain = globals::memory.read<uintptr_t>(globals::fov_manager + 0x168);
-	chain = globals::memory.read<uintptr_t>(chain + 0x0);
-	chain = globals::memory.read<uintptr_t>(chain + 0x148);
-	chain = globals::memory.read<uintptr_t>(chain + 0x40);
-	chain = globals::memory.read<uintptr_t>(chain + 0x30);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+	uintptr_t chain = mem->read<uintptr_t>(ctx->addresses.fov_manager + 0x168);
+	chain = mem->read<uintptr_t>(chain + 0x0);
+	chain = mem->read<uintptr_t>(chain + 0x148);
+	chain = mem->read<uintptr_t>(chain + 0x40);
+	chain = mem->read<uintptr_t>(chain + 0x30);
 
 	if (chain != 0) {
-		globals::window_horizontal_size = globals::memory.read<int>(chain + 0xBC);
-		globals::window_vertical_size = globals::memory.read<int>(chain + 0xC0);
+		ctx->camera_state.window_horizontal_size = mem->read<int>(chain + 0xBC);
+		ctx->camera_state.window_vertical_size = mem->read<int>(chain + 0xC0);
 		return true;
 	}
 
@@ -150,37 +161,42 @@ bool game::update_display_size() {
 }
 
 uintptr_t get_camera() {
-	uintptr_t chain = globals::memory.read<uintptr_t>(globals::game_profile + offsets::game_profile_chain1);
-	chain = globals::memory.read<uintptr_t>(chain + offsets::game_profile_chain2);
-	chain = globals::memory.read<uintptr_t>(chain + offsets::game_profile_chain3);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+	uintptr_t chain = mem->read<uintptr_t>(ctx->addresses.game_profile + offsets::game_profile_chain1);
+	chain = mem->read<uintptr_t>(chain + offsets::game_profile_chain2);
+	chain = mem->read<uintptr_t>(chain + offsets::game_profile_chain3);
 
 	if (chain != 0)
-		return globals::memory.read<uintptr_t>(chain + offsets::game_profile_chain4);
+		return mem->read<uintptr_t>(chain + offsets::game_profile_chain4);
 
 	return 0;
 }
 
 bool game::update_view_translation() {
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
 	uintptr_t game_camera = get_camera();
 
 	if (game_camera == 0)
 		return false;
 
-	globals::camera_view_right = globals::memory.read<vec3_t>(game_camera + offsets::camera_view_right);
-	globals::camera_view_up = globals::memory.read<vec3_t>(game_camera + offsets::camera_view_up);
-	globals::camera_view_forward = globals::memory.read<vec3_t>(game_camera + offsets::camera_view_forward);
-	globals::camera_view_translation = globals::memory.read<vec3_t>(game_camera + offsets::camera_view_translation);
-	globals::camera_view_fovx = globals::memory.read<float>(game_camera + offsets::camera_view_fovx);
-	globals::camera_view_fovy = globals::memory.read<float>(game_camera + offsets::camera_view_fovy);
+	ctx->camera_state.camera_view_right = mem->read<vec3_t>(game_camera + offsets::camera_view_right);
+	ctx->camera_state.camera_view_up = mem->read<vec3_t>(game_camera + offsets::camera_view_up);
+	ctx->camera_state.camera_view_forward = mem->read<vec3_t>(game_camera + offsets::camera_view_forward);
+	ctx->camera_state.camera_view_translation = mem->read<vec3_t>(game_camera + offsets::camera_view_translation);
+	ctx->camera_state.camera_view_fovx = mem->read<float>(game_camera + offsets::camera_view_fovx);
+	ctx->camera_state.camera_view_fovy = mem->read<float>(game_camera + offsets::camera_view_fovy);
 
 	return true;
 }
 
 vec3_t game::w2s(vec3_t position) {
-	vec3_t temp = position - globals::camera_view_translation;
-	return vec3_t((globals::window_horizontal_size / 2) * (1 + temp.dot(globals::camera_view_right) / globals::camera_view_fovx / temp.dot(globals::camera_view_forward * -1)),
-		(globals::window_vertical_size / 2) * (1 - temp.dot(globals::camera_view_up) / globals::camera_view_fovy / temp.dot(globals::camera_view_forward * -1)),
-		temp.dot(globals::camera_view_forward * -1));
+    auto ctx = core::CheatContext::get_instance();
+	vec3_t temp = position - ctx->camera_state.camera_view_translation;
+	return vec3_t((ctx->camera_state.window_horizontal_size / 2) * (1 + temp.dot(ctx->camera_state.camera_view_right) / ctx->camera_state.camera_view_fovx / temp.dot(ctx->camera_state.camera_view_forward * -1)),
+		(ctx->camera_state.window_vertical_size / 2) * (1 - temp.dot(ctx->camera_state.camera_view_up) / ctx->camera_state.camera_view_fovy / temp.dot(ctx->camera_state.camera_view_forward * -1)),
+		temp.dot(ctx->camera_state.camera_view_forward * -1));
 }
 
 entity::entity(uintptr_t obj) {
@@ -196,48 +212,58 @@ uintptr_t entity::get_obj() {
 }
 
 int entity::get_team() {
-	uintptr_t chain = globals::memory.read<uintptr_t>(this->_obj + offsets::game_manager_entity_list);
-	chain = globals::memory.read<uintptr_t>(chain + 0x88);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+	uintptr_t chain = mem->read<uintptr_t>(this->_obj + offsets::game_manager_entity_list);
+	chain = mem->read<uintptr_t>(chain + 0x88);
 
 	if (chain != 0)
-		return globals::memory.read<int8_t>(chain + 0x30);
+		return mem->read<int8_t>(chain + 0x30);
 
 	return 0;
 }
 
 void entity::set_team(int value) {
-	uintptr_t chain = globals::memory.read<uintptr_t>(this->_obj + offsets::game_manager_entity_list);
-	chain = globals::memory.read<uintptr_t>(chain + 0x88);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+	uintptr_t chain = mem->read<uintptr_t>(this->_obj + offsets::game_manager_entity_list);
+	chain = mem->read<uintptr_t>(chain + 0x88);
 
 	if (chain != 0)
-		globals::memory.write<int8_t>(chain + 0x30, value);
+		mem->write<int8_t>(chain + 0x30, value);
 }
 
 int entity::get_health() {
-	uintptr_t chain = globals::memory.read<uintptr_t>(this->_obj + offsets::entity_entity_info);
-	chain = globals::memory.read<uintptr_t>(chain + offsets::entity_info_main_component);
-	chain = globals::memory.read<uintptr_t>(chain + offsets::main_component_child_component);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+	uintptr_t chain = mem->read<uintptr_t>(this->_obj + offsets::entity_entity_info);
+	chain = mem->read<uintptr_t>(chain + offsets::entity_info_main_component);
+	chain = mem->read<uintptr_t>(chain + offsets::main_component_child_component);
 
 	if (chain != 0)
-		return globals::memory.read<int8_t>(chain + offsets::child_component_health_int);
+		return mem->read<int8_t>(chain + offsets::child_component_health_int);
 
 	return 0;
 }
 
 int entity::get_ctu() {
-	uintptr_t chain = globals::memory.read<uintptr_t>(this->_obj + 0xc8);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+	uintptr_t chain = mem->read<uintptr_t>(this->_obj + 0xc8);
 
 	if (chain != 0)
-		return globals::memory.read<uint8_t>(chain + 0x194);
+		return mem->read<uint8_t>(chain + 0x194);
 
 	return 0;
 }
 
 int entity::get_hero() {
-	uintptr_t chain = globals::memory.read<uintptr_t>(this->_obj + 0xc8);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+	uintptr_t chain = mem->read<uintptr_t>(this->_obj + 0xc8);
 
 	if (chain != 0)
-		return globals::memory.read<int8_t>(chain + 0x195);
+		return mem->read<int8_t>(chain + 0x195);
 
 	return 0;
 }
@@ -457,12 +483,14 @@ std::string entity::get_operator_name() {
 }
 
 std::string entity::get_username() {
-	uintptr_t chain = globals::memory.read<uintptr_t>(this->_obj + offsets::entity_entity_info);
-	chain = globals::memory.read<uintptr_t>(chain + 0x1b0);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+	uintptr_t chain = mem->read<uintptr_t>(this->_obj + offsets::entity_entity_info);
+	chain = mem->read<uintptr_t>(chain + 0x1b0);
 
 	if (chain != 0) {
 		char buffer[32];
-		if (globals::memory.read(chain, buffer, sizeof(buffer))) {
+		if (mem->read(chain, buffer, sizeof(buffer))) {
 			buffer[sizeof(buffer) - 1] = '\0';
 			return std::string(buffer);
 		}
@@ -472,50 +500,60 @@ std::string entity::get_username() {
 }
 
 vec3_t entity::get_bone_pos(uintptr_t bone) {
-	uintptr_t chain = globals::memory.read<uintptr_t>(this->_obj + offsets::entity_ref);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+	uintptr_t chain = mem->read<uintptr_t>(this->_obj + offsets::entity_ref);
 
 	if (chain != 0)
-		return globals::memory.read<vec3_t>(chain + bone);
+		return mem->read<vec3_t>(chain + bone);
 
 	return vec3_t();
 }
 
 vec4_t entity::get_view_angles() {
-	uintptr_t chain = globals::memory.read<uintptr_t>(this->_obj + offsets::entity_ref);
-	chain = globals::memory.read<uintptr_t>(chain + 0x1200);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+	uintptr_t chain = mem->read<uintptr_t>(this->_obj + offsets::entity_ref);
+	chain = mem->read<uintptr_t>(chain + 0x1200);
 
 	if (chain != 0)
-		return globals::memory.read<vec4_t>(chain + 0xc0);
+		return mem->read<vec4_t>(chain + 0xc0);
 
 	return vec4_t();
 }
 
 void entity::set_view_angles(vec4_t angles) {
-	uintptr_t chain = globals::memory.read<uintptr_t>(this->_obj + offsets::entity_ref);
-	chain = globals::memory.read<uintptr_t>(chain + 0x1200);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+	uintptr_t chain = mem->read<uintptr_t>(this->_obj + offsets::entity_ref);
+	chain = mem->read<uintptr_t>(chain + 0x1200);
 
 	if (chain != 0)
-		globals::memory.write<vec4_t>(chain + 0xc0, angles);
+		mem->write<vec4_t>(chain + 0xc0, angles);
 }
 
 vec4_t entity::get_gun_angles() { // mby outdated
-	uintptr_t chain = globals::memory.read<uintptr_t>(this->_obj + 0x90);
-	chain = globals::memory.read<uintptr_t>(chain + 0xC8);
-	chain = globals::memory.read<uintptr_t>(chain + 0x278);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+	uintptr_t chain = mem->read<uintptr_t>(this->_obj + 0x90);
+	chain = mem->read<uintptr_t>(chain + 0xC8);
+	chain = mem->read<uintptr_t>(chain + 0x278);
 
 	if (chain != 0)
-		return globals::memory.read<vec4_t>(chain + 0x118);
+		return mem->read<vec4_t>(chain + 0x118);
 
 	return vec4_t();
 }
 
 void entity::set_gun_angles(vec4_t angles) {
-	uintptr_t chain = globals::memory.read<uintptr_t>(this->_obj + 0x90);
-	chain = globals::memory.read<uintptr_t>(chain + 0xC8);
-	chain = globals::memory.read<uintptr_t>(chain + 0x278);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+	uintptr_t chain = mem->read<uintptr_t>(this->_obj + 0x90);
+	chain = mem->read<uintptr_t>(chain + 0xC8);
+	chain = mem->read<uintptr_t>(chain + 0x278);
 
 	if (chain != 0)
-		globals::memory.write<vec4_t>(chain + 0x118, angles);
+		mem->write<vec4_t>(chain + 0x118, angles);
 }
 
 vec3_t calculate_euler(vec4_t quaternion) { // ignore this shit code :)
@@ -534,8 +572,9 @@ vec3_t calculate_angle(vec3_t translation, vec3_t position) { // credits to para
 }
 
 void entity::aim_at_entity(entity target, uintptr_t bone) {
+    auto ctx = core::CheatContext::get_instance();
 	if (target.get_obj() != 0) {
-		vec3_t calc_angle = game::get_angle_to(target.get_bone_pos(bone), globals::camera_view_translation);
+		vec3_t calc_angle = game::get_angle_to(target.get_bone_pos(bone), ctx->camera_state.camera_view_translation);
 		game::clamp_angles(calc_angle);
 
 		vec4_t target_angle = game::create_from_yaw_pitch_roll(calc_angle.z * (float)(math::pi / 180), 0, calc_angle.x * (float)(math::pi / 180));
@@ -543,7 +582,7 @@ void entity::aim_at_entity(entity target, uintptr_t bone) {
 		vec4_t local_angles = get_view_angles();
 
 		if (cheat_config::aimbot_silent_enabled) {
-			auto new_angle = (calculate_angle(globals::camera_view_translation, target.get_bone_pos(bone)) - calculate_euler(local_angles)) * 0.01745329251f; // works but bad code :(
+			auto new_angle = (calculate_angle(ctx->camera_state.camera_view_translation, target.get_bone_pos(bone)) - calculate_euler(local_angles)) * 0.01745329251f; // works but bad code :(
 			set_gun_angles(vec4_t(new_angle.x, new_angle.y, new_angle.z, 0.f));
 		}
 		else {
@@ -557,11 +596,13 @@ void entity::aim_at_entity(entity target, uintptr_t bone) {
 }
 
 int entity::is_firing() {
-	uintptr_t chain = globals::memory.read<uintptr_t>(this->_obj + 0x90);
-	chain = globals::memory.read<uintptr_t>(chain + 0xC8);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+	uintptr_t chain = mem->read<uintptr_t>(this->_obj + 0x90);
+	chain = mem->read<uintptr_t>(chain + 0xC8);
 
 	if (chain != 0)
-		return globals::memory.read<int>(chain + 0x2B8);
+		return mem->read<int>(chain + 0x2B8);
 
 	return 0;
 }

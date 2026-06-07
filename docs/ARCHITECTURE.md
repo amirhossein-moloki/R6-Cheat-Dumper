@@ -38,3 +38,22 @@ Critical resources like process handles and kernel device handles are managed us
 2.  **Configuration:** `ConfigService` loads settings from `config.json`.
 3.  **Attachment:** `MemoryService` attempts to connect to the kernel driver, falling back to Win32 APIs if necessary, and then attaches to the target process.
 4.  **Main Loop:** The application enters a frame-based loop where services update their state, features execute their logic, and the overlay renders the results.
+
+---
+
+## Phase 6: Enterprise Hardening
+
+### 1. Observability Stack
+- **PerformanceMetrics**: Real-time tracking of cheat loop latency and frame times.
+- **HealthService**: Continuous monitoring of game process status and driver integrity.
+- **Severity-Tagged Logging**: P0 (Critical) to P3 (Low) tagging for easier incident response.
+
+### 2. Incident Response (Watchdog)
+- A dedicated Watchdog thread monitors system health every 2 seconds.
+- Upon detecting a critical failure (e.g., game crash), it triggers the **Auto-Recovery Sequence**.
+- Auto-recovery ensures the cheat enters a `Detached` state and clears all volatile caches.
+
+### 3. Deployment & Versioning
+- Semantic versioning (v1.1.x) enforced via a root `VERSION` file.
+- CMake automatically syncs the project version with this file.
+- GitHub Actions generate versioned and timestamped artifacts for every build.

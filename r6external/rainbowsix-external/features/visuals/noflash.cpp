@@ -1,14 +1,17 @@
 #include "visuals.hpp"
-#include "../../globals.hpp"
+#include "../../core/cheat_context.hpp"
 
 void visuals::noflash(byte value) {
-	uintptr_t chain = globals::memory.read<uintptr_t>(globals::game_profile + 0x78);
-	chain = globals::memory.read<uintptr_t>(chain + 0x0);
-	chain = globals::memory.read<uintptr_t>(chain + 0x28);
-	chain = globals::memory.read<uintptr_t>(chain + 0x30);
-	chain = globals::memory.read<uintptr_t>(chain + 0x30);
-	chain = globals::memory.read<uintptr_t>(chain + 0x28);
+    auto ctx = core::CheatContext::get_instance();
+    auto mem = ctx->get_memory_service();
+
+	uintptr_t chain = mem->read<uintptr_t>(ctx->addresses.game_profile + 0x78);
+	chain = mem->read<uintptr_t>(chain + 0x0);
+	chain = mem->read<uintptr_t>(chain + 0x28);
+	chain = mem->read<uintptr_t>(chain + 0x30);
+	chain = mem->read<uintptr_t>(chain + 0x30);
+	chain = mem->read<uintptr_t>(chain + 0x28);
 	
 	if (chain != 0)
-		globals::memory.write<byte>(chain + 0x40, value);
+		mem->write<byte>(chain + 0x40, value);
 }

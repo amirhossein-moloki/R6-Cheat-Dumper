@@ -27,4 +27,10 @@ namespace core {
 #define LOG_ERROR(...) core::Logger::get_logger()->error(__VA_ARGS__)
 #define LOG_CRITICAL(...) core::Logger::get_logger()->critical(__VA_ARGS__)
 
+// Enterprise Severity Tagging
+#define LOG_P0(...) core::Logger::get_logger()->critical("[P0-CRITICAL] " __VA_ARGS__)
+#define LOG_P1(...) core::Logger::get_logger()->error("[P1-HIGH] " __VA_ARGS__)
+#define LOG_P2(...) core::Logger::get_logger()->warn("[P2-MEDIUM] " __VA_ARGS__)
+#define LOG_P3(...) core::Logger::get_logger()->info("[P3-LOW] " __VA_ARGS__)
+
 #endif

@@ -20,7 +20,7 @@ if(NOT DEFINED SDK_VERSION)
         string(REGEX REPLACE "\\\\$" "" SDK_VERSION_ENV "$ENV{WindowsSDKVersion}")
         set(SDK_VERSION ${SDK_VERSION_ENV})
     else()
-        set(SDK_VERSION "10.0.22621.0")
+        set(SDK_VERSION "10.0.28000.0")
     endif()
 endif()
 

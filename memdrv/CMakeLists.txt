@@ -20,7 +20,7 @@ if(NOT DEFINED SDK_VERSION)
     elseif(DEFINED ENV{WDK_VERSION})
         set(SDK_VERSION "$ENV{WDK_VERSION}")
     else()
-        set(SDK_VERSION "10.0.22621.0") # Fallback to a common version
+        set(SDK_VERSION "10.0.28000.0") # Fallback to a common version
     endif()
 endif()
 

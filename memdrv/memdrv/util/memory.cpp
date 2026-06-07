@@ -67,12 +67,12 @@ extern "C" {
 }
 
 namespace util {
-    NTSTATUS GetProcessModuleBase(PEPROCESS process, PCWSTR moduleName, PUINT64 baseAddress) {
+    NTSTATUS GetProcessModuleBase(PEPROCESS process, PCWSTR moduleName, PULONGLONG baseAddress) {
         if (!process || !baseAddress) return STATUS_INVALID_PARAMETER;
 
         // Use PsGetProcessSectionBaseAddress for the main module
         if (moduleName == nullptr || moduleName[0] == L'\0') {
-             *baseAddress = (UINT64)PsGetProcessSectionBaseAddress(process);
+             *baseAddress = (ULONGLONG)PsGetProcessSectionBaseAddress(process);
              return *baseAddress ? STATUS_SUCCESS : STATUS_NOT_FOUND;
         }
 
@@ -94,7 +94,7 @@ namespace util {
 
                     PLDR_DATA_TABLE_ENTRY module = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
                     if (module->BaseDllName.Buffer && _wcsicmp(module->BaseDllName.Buffer, moduleName) == 0) {
-                        *baseAddress = (UINT64)module->DllBase;
+                        *baseAddress = (ULONGLONG)module->DllBase;
                         status = STATUS_SUCCESS;
                         break;
                     }

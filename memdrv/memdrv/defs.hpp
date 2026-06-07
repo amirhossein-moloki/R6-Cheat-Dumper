@@ -3,7 +3,6 @@
 
 #include <ntifs.h>
 #include <ntddk.h>
-#include <windef.h>
 
 #define IOCTL_BASE 0x800
 
@@ -14,18 +13,18 @@
 
 #pragma pack(push, 1)
 typedef struct _MEMORY_REQUEST {
-    HANDLE   ProcessId;
-    UINT64   Address;
-    UINT64   Size;
-    UINT8*   Buffer;
-    NTSTATUS Status;
+    HANDLE    ProcessId;
+    ULONGLONG Address;
+    ULONGLONG Size;
+    UCHAR*    Buffer;
+    NTSTATUS  Status;
 } MEMORY_REQUEST, *PMEMORY_REQUEST;
 
 typedef struct _MODULE_REQUEST {
-    HANDLE   ProcessId;
-    WCHAR    ModuleName[256]; // Security: Must be null-terminated by caller or driver
-    UINT64   BaseAddress;
-    NTSTATUS Status;
+    HANDLE    ProcessId;
+    WCHAR     ModuleName[256]; // Security: Must be null-terminated by caller or driver
+    ULONGLONG BaseAddress;
+    NTSTATUS  Status;
 } MODULE_REQUEST, *PMODULE_REQUEST;
 
 typedef struct _PID_REQUEST {

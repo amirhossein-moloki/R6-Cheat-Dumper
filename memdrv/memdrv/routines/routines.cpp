@@ -12,7 +12,7 @@ namespace routines {
         return nullptr;
     }
 
-    NTSTATUS ReadProcessMemoryKernel(HANDLE pid, UINT64 address, UINT8* buffer, UINT64 size) {
+    NTSTATUS ReadProcessMemoryKernel(HANDLE pid, ULONGLONG address, UCHAR* buffer, ULONGLONG size) {
         if (!pid || !address || !buffer || !size) return STATUS_INVALID_PARAMETER;
 
         PEPROCESS process = GetProcessByPid(pid);
@@ -32,14 +32,14 @@ namespace routines {
         NTSTATUS status = STATUS_NOT_IMPLEMENTED;
         if (MmCopyVirtualMemoryPtr) {
             // Note: buffer is already probed in IoControl
-            status = MmCopyVirtualMemoryPtr(process, (PVOID)address, PsGetCurrentProcess(), buffer, (SIZE_T)size, KernelMode, &bytesCopied);
+            status = MmCopyVirtualMemoryPtr(process, (PVOID)address, PsGetCurrentProcess(), (PVOID)buffer, (SIZE_T)size, KernelMode, &bytesCopied);
         }
 
         ObDereferenceObject(process);
         return status;
     }
 
-    NTSTATUS WriteProcessMemoryKernel(HANDLE pid, UINT64 address, UINT8* buffer, UINT64 size) {
+    NTSTATUS WriteProcessMemoryKernel(HANDLE pid, ULONGLONG address, UCHAR* buffer, ULONGLONG size) {
         if (!pid || !address || !buffer || !size) return STATUS_INVALID_PARAMETER;
 
         PEPROCESS process = GetProcessByPid(pid);
@@ -57,14 +57,14 @@ namespace routines {
         NTSTATUS status = STATUS_NOT_IMPLEMENTED;
         if (MmCopyVirtualMemoryPtr) {
             // Note: buffer is already probed in IoControl
-            status = MmCopyVirtualMemoryPtr(PsGetCurrentProcess(), buffer, process, (PVOID)address, (SIZE_T)size, KernelMode, &bytesCopied);
+            status = MmCopyVirtualMemoryPtr(PsGetCurrentProcess(), (PVOID)buffer, process, (PVOID)address, (SIZE_T)size, KernelMode, &bytesCopied);
         }
 
         ObDereferenceObject(process);
         return status;
     }
 
-    NTSTATUS GetModuleBaseAddress(HANDLE pid, PCWSTR moduleName, PUINT64 baseAddress) {
+    NTSTATUS GetModuleBaseAddress(HANDLE pid, PCWSTR moduleName, PULONGLONG baseAddress) {
         PEPROCESS process = GetProcessByPid(pid);
         if (!process) return STATUS_NOT_FOUND;
 

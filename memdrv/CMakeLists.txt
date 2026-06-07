@@ -67,6 +67,9 @@ if(MSVC)
         /W1              # Warning level 1
         /Z7              # Full symbolic debugging information
         /MP              # Multi-processor compilation
+        /wd4117          # Suppress warning C4117: macro name '_KERNEL_MODE' is reserved
+        /EHs-            # Disable C++ exception handling
+        /EHc-
     )
 
     # ============================================

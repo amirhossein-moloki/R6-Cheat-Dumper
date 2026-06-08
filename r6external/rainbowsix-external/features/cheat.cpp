@@ -39,8 +39,10 @@ void cheat::run() {
 		}*/
 		//visuals::gravity(true);
 		//visuals::noflash(options::noflash_enabled ? 0 : 1);
-		if (game::in_match())
+		if (game::in_match()) {
 			visuals::glow(cheat_config::glow_red, cheat_config::glow_green, cheat_config::glow_blue, cheat_config::glow_alpha, cheat_config::glow_opacity, cheat_config::glow_distance);
+			visuals::esp();
+		}
 		else
 			visuals::glow(0.4078431427f, 0.2980392277f, 0.1960784346f, 1.f, 7.f, 0.f);
 		visuals::spotted(true);

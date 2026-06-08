@@ -10,6 +10,7 @@
 #include "config.hpp"
 #include "overlay/input/input.hpp"
 #include "overlay/overlay.hpp"
+#include "overlay/renderer/renderer.hpp"
 
 #include "util/util.hpp"
 #include "util/memory.hpp"
@@ -70,7 +71,14 @@ void RunCheat() {
     }
 
 	if (!memory_service->is_kernel_mode()) {
-        LOG_INFO("User-mode interface initialized. Access level will be determined upon attachment.");
+        LOG_WARN("==============================================================");
+        LOG_WARN("CRITICAL SECURITY WARNING: DRIVER NOT DETECTED!");
+        LOG_WARN("Running in User-mode is HIGHLY DANGEROUS and WILL lead to a ban.");
+        LOG_WARN("Application will now terminate to protect your account.");
+        LOG_WARN("Please load the 'memdrv' kernel driver before running.");
+        LOG_WARN("==============================================================");
+        system("pause");
+        exit(1);
 	}
 	else {
         LOG_INFO("Kernel-mode driver interface initialized (Full Access).");
@@ -80,9 +88,17 @@ void RunCheat() {
 
     LOG_INFO("Looking for RainbowSix.exe...");
     context->set_state(core::CheatState::WaitingForProcess);
-	while (!util::is_game_open("Rainbow Six", "R6Game", "RainbowSix.exe")) {
-		if (overlay::input::key_pressed(VK_DELETE))
-			exit(0);
+
+    // Message loop and game wait
+    while (!util::is_game_open("Rainbow Six", "R6Game", "RainbowSix.exe")) {
+        MSG msg;
+        while (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+
+		if (overlay::input::key_pressed(VK_DELETE) || overlay::should_close())
+			goto exit_label;
 		
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
@@ -96,16 +112,6 @@ void RunCheat() {
 		exit(1);
 	}
 
-	if (!memory_service->is_kernel_mode()) {
-		if (memory_service->has_write_access()) {
-            LOG_INFO("Attached with FULL ACCESS (Read/Write).");
-		}
-		else {
-            LOG_WARN("Attached with LIMITED ACCESS (Read-Only).");
-            LOG_WARN("Write-based features (No Recoil, Glow, etc.) will be disabled.");
-		}
-	}
-	
     LOG_INFO("Found PID: {}", game_pid);
 
 	if (!memory_service->attach(game_pid)) {
@@ -131,8 +137,12 @@ void RunCheat() {
 	Beep(500, 500);
 
     LOG_INFO("Updating game addresses...");
-    // Note: game::update_addresses still uses globals for now, will refactor in later steps
 	while (!game::update_addresses()) {
+        MSG msg;
+        while (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
 		std::this_thread::sleep_for(std::chrono::milliseconds(500));
         LOG_DEBUG("Still waiting for game addresses to update...");
 	}
@@ -140,7 +150,7 @@ void RunCheat() {
 	
     context->set_state(core::CheatState::Attached);
 
-    // Watchdog Thread for Enterprise-Grade Auto-Recovery
+    // Watchdog Thread
     std::thread watchdog_thread([health_service, context]() {
         LOG_INFO("Watchdog thread started.");
         while (context->get_state() != core::CheatState::Detached) {
@@ -157,7 +167,13 @@ void RunCheat() {
     watchdog_thread.detach();
 
     LOG_INFO("Cheat loop started. Press DELETE to exit.");
-	while (overlay::input::key_pressed(VK_DELETE) == 0) {
+	while (overlay::input::key_pressed(VK_DELETE) == 0 && !overlay::should_close()) {
+        MSG msg;
+        while (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		
         if (context->get_state() == core::CheatState::Detached) {
@@ -167,14 +183,21 @@ void RunCheat() {
 
         core::PerformanceMetrics::instance().start_frame();
 
-        // Frame-based cache invalidation for performance and consistency
         memory_service->clear_cache();
         memory_service->enable_caching(true);
+
+        overlay::renderer::begin_frame();
 
 		if (!game::in_match() || game::get_profile() == 0) {
             if (context->get_state() != core::CheatState::Detached)
                 context->set_state(core::CheatState::Attached);
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+            ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Once);
+            ImGui::Begin("Technical Suite", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+            ImGui::Text("Waiting for match...");
+            ImGui::End();
+
+            overlay::renderer::end_frame();
             core::PerformanceMetrics::instance().end_frame();
 			continue;
 		}
@@ -187,15 +210,14 @@ void RunCheat() {
 		    cheat::run();
         }
 
+        overlay::renderer::end_frame();
         core::PerformanceMetrics::instance().end_frame();
 	}
 
+exit_label:
 	cheat::restore();
-
 	overlay::disable();
-
 	Beep(500, 500);
-	
     core::Logger::shutdown();
 	exit(0);
 }

@@ -82,7 +82,6 @@ void visuals::esp() {
 		draw_list->AddRect(ImVec2(box_top.x - box_width / 2, box_top.y), ImVec2(box_top.x - box_width / 2 + box_width, box_top.y + box_height), ImColor(192, 56, 107, 255), 2.f); // 192, 56, 107
 		draw_list->AddRect(ImVec2(box_top.x - box_width / 2 + 1, box_top.y + 1), ImVec2(box_top.x - box_width / 2 + box_width - 1, box_top.y + box_height - 1), ImColor(0, 0, 0, 100), 2.f);
 		draw_list->AddRectFilled(ImVec2(box_top.x - box_width / 2 + 1, box_top.y + 1), ImVec2(box_top.x - box_width / 2 + box_width - 1, box_top.y + box_height - 1), ImColor(0, 0, 0, 15), 2.f);
-		continue;
 
 		// health bar
 		float max_health = 120.f;
@@ -120,7 +119,6 @@ void visuals::esp() {
 		
 		text_shadowed(draw_list, ImVec2(box_top.x - ImGui::CalcTextSize(character.c_str()).x / 2, box_top.y - 1 - ImGui::CalcTextSize(character.c_str()).y), ImColor(255, 255, 255, 255), character.c_str());
 	}
-	return;
 
 	// doesn't work currently
 	uintptr_t gadget_list = mem->read<uintptr_t>(ctx->addresses.network_manager + 0x30);

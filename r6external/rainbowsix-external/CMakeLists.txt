@@ -101,6 +101,7 @@ target_link_libraries(${PROJECT_NAME}
     d3d11
     dxgi
     d3dcompiler
+    dwmapi
     winmm
     user32
     gdi32

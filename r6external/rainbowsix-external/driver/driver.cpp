@@ -109,7 +109,13 @@ namespace driver {
 	uintptr_t get_module_base(uint64_t handle, const wchar_t* dllname) {
 		if (g_user_mode) {
 			uintptr_t base = 0;
-			HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, GetProcessId(reinterpret_cast<HANDLE>(handle)));
+			DWORD target_pid = ::GetProcessId(reinterpret_cast<HANDLE>(handle));
+			if (target_pid == 0) {
+				LOG_ERROR("Failed to get target PID from handle. Error: {}", GetLastError());
+				return 0;
+			}
+
+			HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, target_pid);
 			if (hSnapshot != INVALID_HANDLE_VALUE) {
 				MODULEENTRY32W me;
 				me.dwSize = sizeof(me);
@@ -122,6 +128,8 @@ namespace driver {
 					} while (Module32NextW(hSnapshot, &me));
 				}
 				CloseHandle(hSnapshot);
+			} else {
+				LOG_ERROR("Failed to create module snapshot. Error: {}", GetLastError());
 			}
 			return base;
 		}

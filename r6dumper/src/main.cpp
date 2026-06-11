@@ -89,9 +89,9 @@ int main()
         return 1;
     }
 
-    base = driver::get_module_base((uint64_t)pid, L"RainbowSix.exe");
+    base = driver::get_module_base(handle, L"RainbowSix.exe");
     if (base == 0) {
-        base = driver::get_module_base((uint64_t)pid, L"RainbowSix_Vulkan.exe");
+        base = driver::get_module_base(handle, L"RainbowSix_Vulkan.exe");
     }
 
     if (base == 0) {

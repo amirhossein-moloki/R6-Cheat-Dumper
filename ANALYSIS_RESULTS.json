@@ -1,0 +1,119 @@
+{
+  "project_analysis": {
+    "key_items": {
+      "view_matrix": {
+        "exists": "NO",
+        "variable_names": [
+          "camera_view_right",
+          "camera_view_up",
+          "camera_view_forward",
+          "camera_view_translation",
+          "camera_view_fovx",
+          "camera_view_fovy"
+        ],
+        "offsets": {
+          "base_chain": "game_profile + 0x68 -> + 0x0 -> + 0x130 -> + 0x420",
+          "right": "0x7C0",
+          "up": "0x7D0",
+          "forward": "0x7E0",
+          "translation": "0x7F0",
+          "fov_x": "0x800",
+          "fov_y": "0x814"
+        },
+        "description": "در این پروژه ماتریس 4x4 کلاسیک وجود ندارد. به جای آن از اجزای جداگانه (بردار راست، بالا، جلو و موقعیت دوربین) به همراه مقادیر FOV برای تبدیل 3D به 2D در تابع w2s استفاده شده است."
+      },
+      "entity_list": {
+        "exists": "YES",
+        "variable_names": [
+          "game_manager_entity_list",
+          "game_manager_entity_count"
+        ],
+        "offsets": {
+          "manager_base": "0x53a6868",
+          "list_offset": "0xC8",
+          "count_offset": "0xD0",
+          "entity_size": "0x8"
+        }
+      },
+      "position_coordinates": {
+        "exists": "YES",
+        "variable_names": [
+          "entity_ref",
+          "entity_head",
+          "entity_feet",
+          "camera_view_translation"
+        ],
+        "offsets": {
+          "entity_base_ref": "0x20",
+          "head_bone": "0x6A0",
+          "feet_bone": "0x700",
+          "pelvis_bone": "0xFD0",
+          "local_player_pos": "0x7F0 (در زنجیره دوربین)"
+        }
+      },
+      "team_and_health": {
+        "exists": "YES",
+        "variable_names": [
+          "child_component_health_int",
+          "team_id_chain"
+        ],
+        "offsets": {
+          "health_chain": "Entity + 0x28 -> + 0xD8 -> + 0x8 -> + 0x168",
+          "team_chain": "Entity + 0xC8 -> + 0x88 -> + 0x30"
+        }
+      }
+    },
+    "keyword_search_results": {
+      "camera_view_matrix_fov": [
+        "camera_view_right",
+        "camera_view_up",
+        "camera_view_forward",
+        "camera_view_translation",
+        "camera_view_fovx",
+        "camera_view_fovy",
+        "fov_manager",
+        "player_fov",
+        "gunmodel_fov",
+        "camera_state"
+      ],
+      "entity_actor_player_list_count_array": [
+        "game_manager_entity_list",
+        "game_manager_entity_count",
+        "entity_entity_info",
+        "entity_ref",
+        "local_player",
+        "entity_object",
+        "entity_count",
+        "entity_list",
+        "operator_name[100][10]",
+        "bone_ids[100][10][17]"
+      ],
+      "position_location_pos_xyz_root_transform": [
+        "head_pos",
+        "feet_pos",
+        "box_top_pos",
+        "head_position",
+        "feet_position",
+        "gadget_pos",
+        "camera_view_translation",
+        "w2s (تابع WorldToScreen)",
+        "vec3_t (ساختار بردار)"
+      ],
+      "team_health_hp_alive_dead_state": [
+        "child_component_health_int",
+        "child_component_health_float",
+        "get_health()",
+        "get_team()",
+        "set_team()",
+        "game_state",
+        "gamestate",
+        "state",
+        "SystemHealth (Enum)"
+      ]
+    },
+    "suggested_esp_struct": {
+      "cpp_code": "struct ESPPlayer {\n    uintptr_t address;\n    int health;\n    int team;\n    std::string name;\n    std::string operator_name;\n    bool is_bot;\n    bool is_downed;\n    struct {\n        vec3_t head_3d;\n        vec3_t feet_3d;\n        vec2_t head_screen;\n        vec2_t feet_screen;\n        float box_height;\n        float box_width;\n    } visual_data;\n};",
+      "status": "کد فعلی دارای منطق پایه در visuals::esp() است، اما استفاده از این ساختار باعث بهینه‌سازی و تمیزتر شدن کد رندرینگ می‌شود."
+    }
+  }
+}

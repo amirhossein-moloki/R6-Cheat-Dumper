@@ -19,7 +19,6 @@ NTSTATUS IoControl(PDEVICE_OBJECT deviceObject, PIRP irp) {
     PIO_STACK_LOCATION stack = IoGetCurrentIrpStackLocation(irp);
     ULONG controlCode = stack->Parameters.DeviceIoControl.IoControlCode;
     ULONG inputLength = stack->Parameters.DeviceIoControl.InputBufferLength;
-    ULONG outputLength = stack->Parameters.DeviceIoControl.OutputBufferLength;
 
     PVOID buffer = irp->AssociatedIrp.SystemBuffer;
 
